@@ -5,7 +5,7 @@ import gi
 import config
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import GLib, Gio, Gtk
+from gi.repository import Gio, Gtk
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
@@ -15,15 +15,11 @@ class AppWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        os.environ['PULSE_PROP_application.name'] = 'OpenSQL Pro'
-        # os.environ['PULSE_PROP_application.version'] = version
-        os.environ['PULSE_PROP_application.icon_name'] = 'com.phpizza.opensqlpro'
-
         builder = Gtk.Builder()
         builder.add_from_file("ui/app-window.glade")
 
-        hb = builder.get_object("header_bar")
-        self.set_titlebar(hb)
+        header_bar = builder.get_object("header_bar")
+        self.set_titlebar(header_bar)
 
         # Add connections to menu
         menu_connect = builder.get_object("menu_connect")
@@ -38,6 +34,7 @@ class AppWindow(Gtk.ApplicationWindow):
         btn_connect = builder.get_object("btn_connect")
         btn_connect.set_popover(menu_connect)
 
+        self.set_icon_name("applications-development")
         self.show_all()
         # self.maximize()
 
@@ -47,10 +44,8 @@ class Application(Gtk.Application):
         super().__init__(*args, application_id="com.phpizza.opensqlpro",
                          flags=Gio.ApplicationFlags.HANDLES_OPEN,
                          **kwargs)
-        self.window = None
 
-        # self.add_main_option("test", ord("t"), GLib.OptionFlags.NONE,
-        #                      GLib.OptionArg.NONE, "Command line test", None)
+        self.window = None
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -93,4 +88,4 @@ class Application(Gtk.Application):
 if __name__ == "__main__":
     config.init()
     app = Application()
-    app.run(sys.argv)
+    app.run()
