@@ -1,12 +1,9 @@
-import sys
-
-import gi
+import sys, config, gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gio, Gtk
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
-
 
 class AppWindow(Gtk.ApplicationWindow):
 
@@ -14,14 +11,22 @@ class AppWindow(Gtk.ApplicationWindow):
         super().__init__(*args, **kwargs)
 
         builder = Gtk.Builder()
-        builder.add_from_file("app-window.glade")
+        builder.add_from_file("ui/app-window.glade")
 
         hb = builder.get_object("header_bar")
         self.set_titlebar(hb)
 
+        # Add connections to menu
+        menu_connect = builder.get_object("menu_connect")
+        menu_connections = builder.get_object("menu_connect_connections")
+
+        for row in config.cursor().execute('SELECT * FROM connections'):
+            button = Gtk.ModelButton(label=row[1])
+            # button.connect("clicked", self.on_button_clicked)
+            menu_connections.pack_start(button, True, True, 0)
+
         # Bind connection menu
         btn_connect = builder.get_object("btn_connect")
-        menu_connect = builder.get_object("menu_connect")
         btn_connect.set_popover(menu_connect)
 
         self.show_all()
@@ -46,7 +51,7 @@ class Application(Gtk.Application):
         self.add_action(action)
 
         builder = Gtk.Builder()
-        builder.add_from_file("app-menu.glade")
+        builder.add_from_file("ui/app-menu.glade")
         # builder.connect_signals(self)
 
         self.set_app_menu(builder.get_object("app-menu"))
@@ -65,9 +70,19 @@ class Application(Gtk.Application):
 
     def on_about(self, action, param):
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
+        about_dialog.set_program_name("OpenSQL Pro")
+        about_dialog.set_version("0.0.1")
+        about_dialog.set_copyright("© Alan Hardman")
+        about_dialog.set_comments("A powerfully simple database client")
+        # about_dialog.set_logo(gtk.gdk.pixbuf_new_from_file("battery.png"))
         about_dialog.present()
 
+    def on_quit(self, action, param):
+        config.commit()
+        self.quit()
 
 if __name__ == "__main__":
     app = Application()
     app.run(sys.argv)
+
+    config.init()
