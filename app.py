@@ -19,8 +19,8 @@ class AppWindow(Gtk.ApplicationWindow):
         hb = builder.get_object("header_bar")
         self.set_titlebar(hb)
 
-        button_connections = builder.get_object("btn_connections")
-        menu_connections = builder.get_object("menu_connections")
+        button_connections = builder.get_object("btn_connect")
+        menu_connections = builder.get_object("menu_connect")
         button_connections.set_popover(menu_connections)
 
 class Application(Gtk.Application):
@@ -62,9 +62,6 @@ class Application(Gtk.Application):
     def on_about(self, action, param):
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
         about_dialog.present()
-
-    def onButtonPressed(self, button):
-        print("Hello World!")
 
 
 if __name__ == "__main__":
