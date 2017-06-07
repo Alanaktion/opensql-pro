@@ -1,4 +1,9 @@
-import sys, config, gi
+import os
+import sys
+import gi
+
+import config
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gio, Gtk
 
@@ -9,6 +14,10 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        os.environ['PULSE_PROP_application.name'] = 'OpenSQL Pro'
+        # os.environ['PULSE_PROP_application.version'] = version
+        os.environ['PULSE_PROP_application.icon_name'] = 'com.phpizza.opensqlpro'
 
         builder = Gtk.Builder()
         builder.add_from_file("ui/app-window.glade")
@@ -70,7 +79,7 @@ class Application(Gtk.Application):
 
     def on_about(self, action, param):
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
-        about_dialog.set_program_name("OpenSQL Pro")
+        # about_dialog.set_program_name("OpenSQL Pro")
         about_dialog.set_version("0.0.1")
         about_dialog.set_copyright("© Alan Hardman")
         about_dialog.set_comments("A powerfully simple database client")
@@ -82,7 +91,6 @@ class Application(Gtk.Application):
         self.quit()
 
 if __name__ == "__main__":
+    config.init()
     app = Application()
     app.run(sys.argv)
-
-    config.init()
