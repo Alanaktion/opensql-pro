@@ -19,9 +19,13 @@ class AppWindow(Gtk.ApplicationWindow):
         hb = builder.get_object("header_bar")
         self.set_titlebar(hb)
 
-        button_connections = builder.get_object("btn_connect")
-        menu_connections = builder.get_object("menu_connect")
-        button_connections.set_popover(menu_connections)
+        # Bind connection menu
+        btn_connect = builder.get_object("btn_connect")
+        menu_connect = builder.get_object("menu_connect")
+        btn_connect.set_popover(menu_connect)
+
+        self.show_all()
+        # self.maximize()
 
 class Application(Gtk.Application):
 
