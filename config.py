@@ -1,30 +1,36 @@
 import sqlite3 # https://docs.python.org/2/library/sqlite3.html
 
-configDb = sqlite3.connect('config.db')
+config_db = sqlite3.connect('config.db')
 
 def init():
+    """ Initialize configuration database """
     cursor().execute('''CREATE TABLE IF NOT EXISTS connections
-                          (name, host, port, user, pass)''')
+                        (name, host, port, user, pass)''')
 
 def get_connections():
-	return cursor().execute('SELECT * FROM connections')
+    """ Get a list of all saved connections """
+    return cursor().execute('SELECT * FROM connections').fetchall()
 
 def add_connection(name, host, port, user, password):
-	row = (name, host, port, user, password)
-	cursor().execute('INSERT INTO connections VALUES(?,?,?,?,?)', row)
+    """ Add a new connection """
+    row = (name, host, port, user, password)
+    cursor().execute('INSERT INTO connections VALUES(?,?,?,?,?)', row)
+
+def get_connection(name):
+    """ Get a connection by name """
+    cursor().execute('SELECT * FROM connections WHERE name = ?',
+                     name).fetchone()
+
+def rm_connection(name):
+    """ Remove a connection by name """
+    cursor().execute('DELETE FROM connections WHERE name = ?', name)
 
 def cursor():
-    global configDb
-    return configDb.cursor()
+    """ Get the database cursor instance """
+    global config_db
+    return config_db.cursor()
 
 def commit():
-    global configDb
-    configDb.commit()
-
-# sampleConns = [
-#     ('local', 'Local', 'localhost', 'root', 'letmein'),
-#     ('test1', 'Test 1', 'test1.example.com', 'root', 'test'),
-#     ('test2', 'Test 2', 'test2.example.com', 'example', 'hi'),
-# ]
-# c.executemany('INSERT INTO connections VALUES (?,?,?,?,?)', sampleConns)
-# config.commit()
+    """ Write changes to the database file """
+    global config_db
+    return config_db.commit()

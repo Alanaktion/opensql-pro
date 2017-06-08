@@ -1,4 +1,3 @@
-import os
 import sys
 import gi
 
@@ -24,24 +23,28 @@ class AppWindow(Gtk.ApplicationWindow):
         header_bar = builder.get_object("header_bar")
         self.set_titlebar(header_bar)
 
-        # Add connections to menu
-        menu_connections = builder.get_object("menu_connect_connections")
+        # Display connection list
+        box_connect = builder.get_object("box_connect")
         connections = config.get_connections()
-        if connections.rowcount:
-            print("adding label")
-            label = Gtk.Label(label="Saved Connections")
-            menu_connections.pack_end(label, True, True, 0)
+
         for row in connections:
-            print(row)
             button = Gtk.Button(label=row[0])
             button.connect("clicked", self.btn_connect_saved)
-            print(button.get_label())
-            menu_connections.pack_start(button, True, True, 0)
+            box_connect.pack_start(button, True, True, 0)
+
+        if connections:
+            separator = Gtk.Separator(valign="center")
+            box_connect.pack_start(separator, True, True, 0)
+
+        add_button = builder.get_object("btn_add_connection")
+        box_connect.pack_start(add_button, True, True, 0)
+
+        self.add(box_connect)
 
         # Bind connection menu
-        btn_connect = builder.get_object("btn_connect")
-        self.menu_connect = builder.get_object("menu_connect")
-        btn_connect.set_popover(self.menu_connect)
+        # btn_connect = builder.get_object("btn_connect")
+        # self.menu_connect = builder.get_object("menu_connect")
+        # btn_connect.set_popover(self.menu_connect)
 
         self.set_icon_name("applications-development")
         self.show_all()
@@ -52,10 +55,12 @@ class AppWindow(Gtk.ApplicationWindow):
         print(button.label)
 
     def btn_add_connection(self, button):
-        self.menu_connect.popdown()
-        add_dialog = AddConnectionWindow(transient_for=self, modal=True)
+        # self.menu_connect.popdown()
+        add_dialog = AddConnectionWindow(transient_for=self, modal=True,
+                                         skip_taskbar_hint=True)
         add_dialog.present()
 
+    @staticmethod
     def on_destroy(self, widget=None, *data):
         config.commit()
 
@@ -63,7 +68,6 @@ class Application(Gtk.Application):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, application_id="com.phpizza.opensqlpro",
-                         flags=Gio.ApplicationFlags.HANDLES_OPEN,
                          **kwargs)
 
         self.window = None
@@ -90,19 +94,20 @@ class Application(Gtk.Application):
 
         self.window.present()
 
-    def do_open(self, file):
-        print("file opened yay")
-
     def on_about(self, action, param):
+        """ Show About dialog """
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
-        # about_dialog.set_program_name("OpenSQL Pro")
+        about_dialog.set_program_name("OpenSQL Pro")
         about_dialog.set_version("0.0.1")
         about_dialog.set_copyright("© Alan Hardman")
         about_dialog.set_comments("A powerfully simple database client")
         # about_dialog.set_logo(gtk.gdk.pixbuf_new_from_file("battery.png"))
         about_dialog.present()
 
+    @staticmethod
     def on_quit(self, action, param):
+        """ Quit application, saving the config database """
+        # TODO: save application window state
         config.commit()
         self.quit()
 
@@ -123,9 +128,11 @@ class AddConnectionWindow(Gtk.Window):
         self.add(input_grid)
 
     def btn_cancel(self, button):
+        """ Cancel adding a connection from button click """
         self.close()
 
     def btn_save(self, button):
+        """ Save new connection from button click """
         name = self.builder.get_object("text_name").get_text()
         host = self.builder.get_object("text_host").get_text()
         port = self.builder.get_object("text_port").get_text()
