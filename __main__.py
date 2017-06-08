@@ -15,28 +15,49 @@ class AppWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.set_default_size(800, 600)
+
         builder = Gtk.Builder()
         builder.add_from_file("ui/app-window.glade")
+        builder.connect_signals(self)
 
         header_bar = builder.get_object("header_bar")
         self.set_titlebar(header_bar)
 
         # Add connections to menu
-        menu_connect = builder.get_object("menu_connect")
         menu_connections = builder.get_object("menu_connect_connections")
-
-        for row in config.cursor().execute('SELECT * FROM connections'):
-            button = Gtk.ModelButton(label=row[1])
-            # button.connect("clicked", self.on_button_clicked)
+        connections = config.get_connections()
+        if connections.rowcount:
+            print("adding label")
+            label = Gtk.Label(label="Saved Connections")
+            menu_connections.pack_end(label, True, True, 0)
+        for row in connections:
+            print(row)
+            button = Gtk.Button(label=row[0])
+            button.connect("clicked", self.btn_connect_saved)
+            print(button.get_label())
             menu_connections.pack_start(button, True, True, 0)
 
         # Bind connection menu
         btn_connect = builder.get_object("btn_connect")
-        btn_connect.set_popover(menu_connect)
+        self.menu_connect = builder.get_object("menu_connect")
+        btn_connect.set_popover(self.menu_connect)
 
         self.set_icon_name("applications-development")
         self.show_all()
-        # self.maximize()
+
+        self.connect('delete-event', self.on_destroy)
+
+    def btn_connect_saved(self, button):
+        print(button.label)
+
+    def btn_add_connection(self, button):
+        self.menu_connect.popdown()
+        add_dialog = AddConnectionWindow(transient_for=self, modal=True)
+        add_dialog.present()
+
+    def on_destroy(self, widget=None, *data):
+        config.commit()
 
 class Application(Gtk.Application):
 
@@ -84,6 +105,35 @@ class Application(Gtk.Application):
     def on_quit(self, action, param):
         config.commit()
         self.quit()
+
+
+class AddConnectionWindow(Gtk.Window):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file("ui/add-dialog.glade")
+        self.builder.connect_signals(self)
+
+        header_bar = self.builder.get_object("header_bar")
+        self.set_titlebar(header_bar)
+
+        input_grid = self.builder.get_object("input_grid")
+        self.add(input_grid)
+
+    def btn_cancel(self, button):
+        self.close()
+
+    def btn_save(self, button):
+        name = self.builder.get_object("text_name").get_text()
+        host = self.builder.get_object("text_host").get_text()
+        port = self.builder.get_object("text_port").get_text()
+        user = self.builder.get_object("text_user").get_text()
+        password = self.builder.get_object("text_pass").get_text()
+        config.add_connection(name, host, port, user, password)
+        self.close()
+
 
 if __name__ == "__main__":
     config.init()

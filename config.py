@@ -3,10 +3,15 @@ import sqlite3 # https://docs.python.org/2/library/sqlite3.html
 configDb = sqlite3.connect('config.db')
 
 def init():
-    global configDb
-    c = configDb.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS connections
-                (name, label, host, user, pass)''')
+    cursor().execute('''CREATE TABLE IF NOT EXISTS connections
+                          (name, host, port, user, pass)''')
+
+def get_connections():
+	return cursor().execute('SELECT * FROM connections')
+
+def add_connection(name, host, port, user, password):
+	row = (name, host, port, user, password)
+	cursor().execute('INSERT INTO connections VALUES(?,?,?,?,?)', row)
 
 def cursor():
     global configDb
