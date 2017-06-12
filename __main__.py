@@ -10,6 +10,7 @@ if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
 
 class AppWindow(Gtk.ApplicationWindow):
+    """Main application window"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,30 +42,27 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.add(box_connect)
 
-        # Bind connection menu
-        # btn_connect = builder.get_object("btn_connect")
-        # self.menu_connect = builder.get_object("menu_connect")
-        # btn_connect.set_popover(self.menu_connect)
-
         self.set_icon_name("applications-development")
         self.show_all()
 
         self.connect('delete-event', self.on_destroy)
 
     def btn_connect_saved(self, button):
-        print(button.label)
+        """Connect to saved server on button click"""
+        print(button.get_label())
 
     def btn_add_connection(self, button):
-        # self.menu_connect.popdown()
+        """Show Add Connection modal on button click"""
         add_dialog = AddConnectionWindow(transient_for=self, modal=True,
                                          skip_taskbar_hint=True)
         add_dialog.present()
 
-    @staticmethod
+    @classmethod
     def on_destroy(self, widget=None, *data):
         config.commit()
 
 class Application(Gtk.Application):
+    """Core application class"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, application_id="com.phpizza.opensqlpro",
@@ -73,6 +71,7 @@ class Application(Gtk.Application):
         self.window = None
 
     def do_startup(self):
+        """"""
         Gtk.Application.do_startup(self)
 
         action = Gio.SimpleAction.new("about", None)
@@ -86,7 +85,7 @@ class Application(Gtk.Application):
         self.set_app_menu(builder.get_object("app-menu"))
 
     def do_activate(self):
-        # We only allow a single window and raise any existing ones
+        """Create/raise main window on activate"""
         if not self.window:
             # Windows are associated with the application
             # when the last one is closed the application shuts down
@@ -95,7 +94,7 @@ class Application(Gtk.Application):
         self.window.present()
 
     def on_about(self, action, param):
-        """ Show About dialog """
+        """Show About dialog"""
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
         about_dialog.set_program_name("OpenSQL Pro")
         about_dialog.set_version("0.0.1")
@@ -106,13 +105,14 @@ class Application(Gtk.Application):
 
     @staticmethod
     def on_quit(self, action, param):
-        """ Quit application, saving the config database """
+        """Quit application, saving the config database"""
         # TODO: save application window state
         config.commit()
         self.quit()
 
 
 class AddConnectionWindow(Gtk.Window):
+    """Add connection modal window"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -128,11 +128,11 @@ class AddConnectionWindow(Gtk.Window):
         self.add(input_grid)
 
     def btn_cancel(self, button):
-        """ Cancel adding a connection from button click """
+        """Cancel adding a connection from button click"""
         self.close()
 
     def btn_save(self, button):
-        """ Save new connection from button click """
+        """Save new connection from button click"""
         name = self.builder.get_object("text_name").get_text()
         host = self.builder.get_object("text_host").get_text()
         port = self.builder.get_object("text_port").get_text()
