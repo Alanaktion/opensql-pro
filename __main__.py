@@ -82,15 +82,17 @@ class AppWindow(Gtk.ApplicationWindow):
         # TODO: Set buffer contents to sample query
 
         result = config.get_connections()
-        # if result:
-        #     keys = result[0].keys()
-
-        self.result_list = Gtk.ListStore(str, str, str, str, str)
-        for row in result:
-            self.result_list.append(row)
-
         edit_results = self.builder.get_object("edit_results")
-        edit_results.set_model(self.result_list)
+        result_list = Gtk.ListStore(str, str, str, str, str)
+        if result:
+            for i, key in enumerate(result[0].keys()):
+                text = Gtk.CellRendererText()
+                column = Gtk.TreeViewColumn(key, text, text=i, resizable=True)
+                edit_results.append_column(column)
+        for row in result:
+            result_list.append(row)
+
+        edit_results.set_model(result_list)
         edit_results.show_all()
 
     def btn_add_connection(self, button):
