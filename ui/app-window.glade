@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkHeaderBar" id="header_bar">
@@ -40,6 +39,7 @@
       </object>
     </child>
   </object>
+
   <object class="GtkButtonBox" id="box_connect">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -61,5 +61,39 @@
     <property name="can_focus">True</property>
     <property name="receives_default">True</property>
     <signal name="clicked" handler="btn_add_connection" swapped="no"/>
+  </object>
+
+  <object class="GtkPaned" id="edit_pane">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="orientation">vertical</property>
+    <!--<child>
+      <object class="GtkSourceView" id="edit_query">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="wrap_mode">word-char</property>
+        <property name="left_margin">2</property>
+        <property name="right_margin">2</property>
+        <property name="top_margin">2</property>
+        <property name="bottom_margin">2</property>
+        <property name="monospace">True</property>
+        <property name="show_line_numbers">True</property>
+        <property name="tab_width">4</property>
+        <property name="show_right_margin">True</property>
+        <property name="highlight_syntax">True</property>
+        <property name="smart_home_end">always</property>
+      </object>
+      <packing>
+        <property name="resize">False</property>
+        <property name="shrink">True</property>
+      </packing>
+    </child>-->
+  </object>
+  <object class="GtkTreeView" id="edit_results">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <child internal-child="selection">
+      <object class="GtkTreeSelection"/>
+    </child>
   </object>
 </interface>

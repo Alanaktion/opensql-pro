@@ -2,6 +2,7 @@
 import sqlite3 # https://docs.python.org/2/library/sqlite3.html
 
 config_db = sqlite3.connect('config.db')
+config_db.row_factory = sqlite3.Row
 
 def init():
     """Initialize configuration database"""

@@ -4,7 +4,8 @@ import gi
 import config
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gio, Gtk
+gi.require_version('GtkSource', '3.0')
+from gi.repository import Gio, Gtk, GtkSource
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
@@ -17,15 +18,15 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.set_default_size(800, 600)
 
-        builder = Gtk.Builder()
-        builder.add_from_file("ui/app-window.glade")
-        builder.connect_signals(self)
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file("ui/app-window.glade")
+        self.builder.connect_signals(self)
 
-        header_bar = builder.get_object("header_bar")
+        header_bar = self.builder.get_object("header_bar")
         self.set_titlebar(header_bar)
 
         # Display connection list
-        box_connect = builder.get_object("box_connect")
+        box_connect = self.builder.get_object("box_connect")
         connections = config.get_connections()
 
         for row in connections:
@@ -37,7 +38,7 @@ class AppWindow(Gtk.ApplicationWindow):
             separator = Gtk.Separator(valign="center")
             box_connect.pack_start(separator, True, True, 0)
 
-        add_button = builder.get_object("btn_add_connection")
+        add_button = self.builder.get_object("btn_add_connection")
         box_connect.pack_start(add_button, True, True, 0)
 
         self.add(box_connect)
@@ -49,7 +50,48 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def btn_connect_saved(self, button):
         """Connect to saved server on button click"""
-        print(button.get_label())
+        # TODO: Actually connect to the server
+
+        # Remove connection UI
+        self.builder.get_object("box_connect").destroy()
+
+        # Add editor UI
+        edit_pane = self.builder.get_object("edit_pane")
+        edit_query = GtkSource.View(wrap_mode="word-char", monospace=True,
+                                    show_line_numbers=True)
+        edit_pane.add1(edit_query)
+        edit_results = self.builder.get_object("edit_results")
+        edit_pane.add2(edit_results)
+
+        # lang_manager = GtkSource.LanguageManager()
+        # lang = lang_manager.guess_language("a.sql", None)
+        # edit_query = self.builder.get_object("edit_query")
+        # buffer = edit_query.get_buffer()
+        # buffer.set_language(lang)
+
+        self.add(edit_pane)
+        edit_pane.show_all()
+
+        # Run test query
+        self.test_query()
+
+    def test_query(self):
+        """Test the query UI with the SQLite DB"""
+        # edit_query = self.builder.get_object("edit_query")
+        # buffer = edit_query.get_buffer()
+        # TODO: Set buffer contents to sample query
+
+        result = config.get_connections()
+        # if result:
+        #     keys = result[0].keys()
+
+        self.result_list = Gtk.ListStore(str, str, str, str, str)
+        for row in result:
+            self.result_list.append(row)
+
+        edit_results = self.builder.get_object("edit_results")
+        edit_results.set_model(self.result_list)
+        edit_results.show_all()
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
@@ -58,7 +100,7 @@ class AppWindow(Gtk.ApplicationWindow):
         add_dialog.present()
 
     @classmethod
-    def on_destroy(self, widget=None, *data):
+    def on_destroy(cls, widget=None, *data):
         config.commit()
 
 class Application(Gtk.Application):
@@ -71,7 +113,7 @@ class Application(Gtk.Application):
         self.window = None
 
     def do_startup(self):
-        """"""
+        """"Initialize application"""
         Gtk.Application.do_startup(self)
 
         action = Gio.SimpleAction.new("about", None)
@@ -100,15 +142,14 @@ class Application(Gtk.Application):
         about_dialog.set_version("0.0.1")
         about_dialog.set_copyright("© Alan Hardman")
         about_dialog.set_comments("A powerfully simple database client")
-        # about_dialog.set_logo(gtk.gdk.pixbuf_new_from_file("battery.png"))
         about_dialog.present()
 
-    @staticmethod
-    def on_quit(self, action, param):
+    @classmethod
+    def on_quit(cls, action, param):
         """Quit application, saving the config database"""
         # TODO: save application window state
         config.commit()
-        self.quit()
+        cls.quit()
 
 
 class AddConnectionWindow(Gtk.Window):
