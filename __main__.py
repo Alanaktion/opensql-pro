@@ -46,6 +46,8 @@ class AppWindow(Gtk.ApplicationWindow):
         self.set_icon_name("applications-development")
         self.show_all()
 
+        self.edit_query = None
+
         self.connect('delete-event', self.on_destroy)
 
     def btn_connect_saved(self, button):
@@ -57,16 +59,16 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # Add editor UI
         edit_pane = self.builder.get_object("edit_pane")
-        edit_query = GtkSource.View(wrap_mode="word-char", monospace=True,
+        self.edit_query = GtkSource.View(wrap_mode="word-char", monospace=True,
                                     show_line_numbers=True)
-        edit_pane.add1(edit_query)
+        edit_pane.add1(self.edit_query)
         edit_results = self.builder.get_object("edit_results")
         edit_pane.add2(edit_results)
 
         # lang_manager = GtkSource.LanguageManager()
         # lang = lang_manager.guess_language("a.sql", None)
-        # edit_query = self.builder.get_object("edit_query")
-        # buffer = edit_query.get_buffer()
+        # self.edit_query = self.builder.get_object("edit_query")
+        # buffer = self.edit_query.get_buffer()
         # buffer.set_language(lang)
 
         self.add(edit_pane)
@@ -77,8 +79,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def test_query(self):
         """Test the query UI with the SQLite DB"""
-        # edit_query = self.builder.get_object("edit_query")
-        # buffer = edit_query.get_buffer()
+        self.edit_query.get_buffer().set_text("SELECT * FROM connections;")
         # TODO: Set buffer contents to sample query
 
         result = config.get_connections()
@@ -94,6 +95,12 @@ class AppWindow(Gtk.ApplicationWindow):
 
         edit_results.set_model(result_list)
         edit_results.show_all()
+
+    def run_editor_query(self):
+        """Run the query currently in the editor"""
+        query = self.edit_query.get_buffer().get_text()
+        result = config.cursor().exec(query).fetchall()
+        # TODO: figure out how to dynamically create a Gtk.ListStore
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
