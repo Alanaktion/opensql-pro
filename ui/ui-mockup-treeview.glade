@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkListStore" id="liststore1">
+    <columns>
+      <!-- column-name String 1 -->
+      <column type="gchararray"/>
+      <!-- column-name String 2 -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">Test String</col>
+        <col id="1" translatable="yes">Testing again</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">This is also a test</col>
+        <col id="1" translatable="yes">Hello</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">This one too!</col>
+        <col id="1" translatable="yes">World</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkWindow">
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkTreeView">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="model">liststore1</property>
+        <property name="fixed_height_mode">True</property>
+        <property name="enable_grid_lines">both</property>
+        <child internal-child="selection">
+          <object class="GtkTreeSelection"/>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="resizable">True</property>
+            <property name="sizing">fixed</property>
+            <property name="title" translatable="yes">String 1</property>
+            <child>
+              <object class="GtkCellRendererText">
+                <property name="editable">True</property>
+              </object>
+              <attributes>
+                <attribute name="text">0</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkTreeViewColumn">
+            <property name="sizing">fixed</property>
+            <property name="title" translatable="yes">String 2</property>
+            <child>
+              <object class="GtkCellRendererText">
+                <property name="editable">True</property>
+              </object>
+              <attributes>
+                <attribute name="text">1</attribute>
+              </attributes>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+  </object>
+</interface>
