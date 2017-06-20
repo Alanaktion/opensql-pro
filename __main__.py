@@ -88,7 +88,8 @@ class AppWindow(Gtk.ApplicationWindow):
         if result:
             for i, key in enumerate(result[0].keys()):
                 text = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(key, text, text=i, resizable=True)
+                column = Gtk.TreeViewColumn(key, text, text=i)
+                column.set_resizable(True)
                 edit_results.append_column(column)
         for row in result:
             result_list.append(row)
