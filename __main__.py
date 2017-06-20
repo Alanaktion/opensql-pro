@@ -84,15 +84,21 @@ class AppWindow(Gtk.ApplicationWindow):
 
         result = config.get_connections()
         edit_results = self.builder.get_object("edit_results")
-        result_list = Gtk.ListStore(str, str, str, str, str)
+
         if result:
-            for i, key in enumerate(result[0].keys()):
-                text = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(key, text, text=i)
+            keys = result[0].keys()
+            cols = []
+
+            for i, key in enumerate(keys):
+                cols = cols + [str]
+                control = Gtk.CellRendererText()
+                column = Gtk.TreeViewColumn(key, control, text=i)
                 column.set_resizable(True)
                 edit_results.append_column(column)
-        for row in result:
-            result_list.append(row)
+
+            result_list = Gtk.ListStore(*cols)
+            for row in result:
+                result_list.append(row)
 
         edit_results.set_model(result_list)
         edit_results.show_all()
