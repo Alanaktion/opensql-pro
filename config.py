@@ -1,5 +1,7 @@
 """Helper module for persisting settings in an SQLite DB"""
 import sqlite3 # https://docs.python.org/2/library/sqlite3.html
+# from appdirs import *
+# TODO: Use appdirs' config path to store DB
 
 config_db = sqlite3.connect('config.db')
 config_db.row_factory = sqlite3.Row

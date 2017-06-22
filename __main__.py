@@ -70,7 +70,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # Add editor UI
         self.editor = GtkSource.View(wrap_mode='word-char', monospace=True,
-                                         show_line_numbers=True)
+                                     show_line_numbers=True)
         editor_scroll = self.builder.get_object('editor_scroll')
         editor_scroll.add(self.editor)
 
@@ -144,6 +144,7 @@ class AppWindow(Gtk.ApplicationWindow):
         add_dialog.present()
 
     def on_destroy(self, widget=None, *data):
+        """Write config DB and close MySQL connections on quit"""
         # TODO: save window state
         config.commit()
         if self.db_connection:
