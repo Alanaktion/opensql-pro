@@ -101,8 +101,10 @@ class AppWindow(Gtk.ApplicationWindow):
     def run_editor_query(self):
         """Run the query currently in the editor"""
         buffer = self.edit_query.get_buffer()
-        query = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(),
-                                False)
+        sel_range = buffer.get_selection_bounds()
+        if not sel_range:
+            sel_range = (buffer.get_start_iter(), buffer.get_end_iter())
+        query = buffer.get_text(*sel_range, False)
 
         cursor = self.db_connection.cursor()
         cursor.execute(query)
