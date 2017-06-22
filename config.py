@@ -7,7 +7,8 @@ config_db.row_factory = sqlite3.Row
 def init():
     """Initialize configuration database"""
     cursor().execute('''CREATE TABLE IF NOT EXISTS connections
-                        (name, host, port, user, pass)''')
+                        (id integer primary key,
+                        name, host, port, user, pass)''')
 
 def get_connections():
     """Get a list of all saved connections"""
@@ -16,16 +17,17 @@ def get_connections():
 def add_connection(name, host, port, user, password):
     """Add a new connection"""
     row = (name, host, port, user, password)
-    cursor().execute('INSERT INTO connections VALUES(?,?,?,?,?)', row)
+    cursor().execute('''INSERT INTO connections (name, host, port,user, pass)
+                        VALUES(?,?,?,?,?)''', row)
 
-def get_connection(name):
-    """Get a connection by name"""
-    cursor().execute('SELECT * FROM connections WHERE name = ?',
-                     name).fetchone()
+def get_connection(key):
+    """Get a connection by id"""
+    return cursor().execute('SELECT * FROM connections WHERE id = ?',
+                            str(key)).fetchone()
 
-def rm_connection(name):
-    """Remove a connection by name"""
-    cursor().execute('DELETE FROM connections WHERE name = ?', name)
+def rm_connection(key):
+    """Remove a connection by id"""
+    cursor().execute('DELETE FROM connections WHERE id = ?', str(key))
 
 def cursor():
     """Get the database cursor instance"""

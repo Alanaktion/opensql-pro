@@ -1,6 +1,9 @@
 import sys
 import gi
 
+import pymysql.cursors
+import pymysql
+
 import config
 
 gi.require_version('Gtk', '3.0')
@@ -30,8 +33,8 @@ class AppWindow(Gtk.ApplicationWindow):
         connections = config.get_connections()
 
         for row in connections:
-            button = Gtk.Button(label=row[0])
-            button.connect('clicked', self.btn_connect_saved)
+            button = Gtk.Button(label=row[1])
+            button.connect('clicked', self.btn_connect_saved, row[0])
             box_connect.pack_start(button, True, True, 0)
 
         if connections:
@@ -47,23 +50,29 @@ class AppWindow(Gtk.ApplicationWindow):
         self.show_all()
 
         self.edit_query = None
+        self.db_connection = None
 
         self.connect('delete-event', self.on_destroy)
 
-    def btn_connect_saved(self, button):
+    def btn_connect_saved(self, button, data):
         """Connect to saved server on button click"""
-        # TODO: Actually connect to the server
 
         # Remove connection UI
         self.builder.get_object('box_connect').destroy()
 
+        # Connect to server
+        conndata = config.get_connection(data)
+        self.db_connection = pymysql.connect(host=conndata[2],
+                                             user=conndata[4],
+                                             password=conndata[5],
+                                             charset='utf8mb4',
+                                             cursorclass=pymysql.cursors.DictCursor)
+
         # Add editor UI
-        edit_pane = self.builder.get_object('edit_pane')
         self.edit_query = GtkSource.View(wrap_mode='word-char', monospace=True,
-                                    show_line_numbers=True)
-        edit_pane.add1(self.edit_query)
-        edit_results = self.builder.get_object('edit_results')
-        edit_pane.add2(edit_results)
+                                         show_line_numbers=True)
+        edit_query_scroll = self.builder.get_object('edit_query_scroll')
+        edit_query_scroll.add(self.edit_query)
 
         # lang_manager = GtkSource.LanguageManager()
         # lang = lang_manager.guess_language('a.sql', None)
@@ -71,19 +80,36 @@ class AppWindow(Gtk.ApplicationWindow):
         # buffer = self.edit_query.get_buffer()
         # buffer.set_language(lang)
 
+        edit_pane = self.builder.get_object('edit_pane')
         self.add(edit_pane)
         edit_pane.show_all()
+
+        # Bind run button
+        btn_run = self.builder.get_object('btn_run')
+        btn_run.set_sensitive(True)
+        btn_run.connect('clicked', self.btn_run)
 
         # Run test query
         self.test_query()
 
     def test_query(self):
         """Test the query UI with the SQLite DB"""
-        self.edit_query.get_buffer().set_text('SELECT * FROM connections;')
-        # TODO: Set buffer contents to sample query
+        self.edit_query.get_buffer().set_text('SHOW TABLES;')
+        self.db_connection.cursor().execute('USE mysql;')
+        self.run_editor_query()
 
-        result = config.get_connections()
+    def run_editor_query(self):
+        """Run the query currently in the editor"""
+        buffer = self.edit_query.get_buffer()
+        query = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(),
+                                False)
+
+        cursor = self.db_connection.cursor()
+        cursor.execute(query)
+        result = cursor.fetchall()
+
         edit_results = self.builder.get_object('edit_results')
+        edit_results.set_model(None)
 
         if result:
             keys = result[0].keys()
@@ -98,16 +124,15 @@ class AppWindow(Gtk.ApplicationWindow):
 
             result_list = Gtk.ListStore(*cols)
             for row in result:
-                result_list.append(row)
+                result_list.append(row.values())
 
-        edit_results.set_model(result_list)
+            edit_results.set_model(result_list)
+
         edit_results.show_all()
 
-    def run_editor_query(self):
-        """Run the query currently in the editor"""
-        query = self.edit_query.get_buffer().get_text()
-        result = config.cursor().exec(query).fetchall()
-        # TODO: figure out how to dynamically create a Gtk.ListStore
+    def btn_run(self, button):
+        """Run query on button click"""
+        self.run_editor_query()
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
@@ -115,9 +140,10 @@ class AppWindow(Gtk.ApplicationWindow):
                                          skip_taskbar_hint=True)
         add_dialog.present()
 
-    @classmethod
-    def on_destroy(cls, widget=None, *data):
+    def on_destroy(self, widget=None, *data):
         config.commit()
+        if self.db_connection:
+            self.db_connection.close()
 
 class Application(Gtk.Application):
     """Core application class"""
