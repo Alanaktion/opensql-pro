@@ -144,6 +144,7 @@ class AppWindow(Gtk.ApplicationWindow):
         add_dialog.present()
 
     def on_destroy(self, widget=None, *data):
+        # TODO: save window state
         config.commit()
         if self.db_connection:
             self.db_connection.close()
@@ -165,10 +166,12 @@ class Application(Gtk.Application):
         action.connect('activate', self.on_about)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("quit", None)
+        action.connect("activate", self.on_quit)
+        self.add_action(action)
+
         builder = Gtk.Builder()
         builder.add_from_file('ui/app-menu.glade')
-        # builder.connect_signals(self)
-
         self.set_app_menu(builder.get_object('app-menu'))
 
     def do_activate(self):
@@ -189,12 +192,9 @@ class Application(Gtk.Application):
         about_dialog.set_comments('A powerfully simple database client')
         about_dialog.present()
 
-    @classmethod
-    def on_quit(cls, action, param):
-        """Quit application, saving the config database"""
-        # TODO: save application window state
-        config.commit()
-        cls.quit()
+    def on_quit(self, action, param):
+        """Close main window, gracefully exiting"""
+        self.window.close()
 
 
 class AddConnectionWindow(Gtk.Window):
