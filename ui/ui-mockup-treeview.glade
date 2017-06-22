@@ -4,9 +4,9 @@
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkListStore" id="liststore1">
     <columns>
-      <!-- column-name String 1 -->
+      <!-- column-name String -->
       <column type="gchararray"/>
-      <!-- column-name String 2 -->
+      <!-- column-name String1 -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -31,6 +31,8 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="model">liststore1</property>
+        <property name="rules_hint">True</property>
+        <property name="enable_search">False</property>
         <property name="fixed_height_mode">True</property>
         <property name="enable_grid_lines">both</property>
         <child internal-child="selection">
@@ -40,7 +42,7 @@
           <object class="GtkTreeViewColumn">
             <property name="resizable">True</property>
             <property name="sizing">fixed</property>
-            <property name="title" translatable="yes">String 1</property>
+            <property name="title">String 1</property>
             <child>
               <object class="GtkCellRendererText">
                 <property name="editable">True</property>
@@ -54,7 +56,7 @@
         <child>
           <object class="GtkTreeViewColumn">
             <property name="sizing">fixed</property>
-            <property name="title" translatable="yes">String 2</property>
+            <property name="title">String 2</property>
             <child>
               <object class="GtkCellRendererText">
                 <property name="editable">True</property>
@@ -67,7 +69,7 @@
         </child>
       </object>
     </child>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
   </object>

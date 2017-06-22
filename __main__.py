@@ -49,7 +49,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.set_icon_name('applications-development')
         self.show_all()
 
-        self.edit_query = None
+        self.editor = None
         self.db_connection = None
 
         self.connect('delete-event', self.on_destroy)
@@ -69,15 +69,15 @@ class AppWindow(Gtk.ApplicationWindow):
                                              cursorclass=pymysql.cursors.DictCursor)
 
         # Add editor UI
-        self.edit_query = GtkSource.View(wrap_mode='word-char', monospace=True,
+        self.editor = GtkSource.View(wrap_mode='word-char', monospace=True,
                                          show_line_numbers=True)
-        edit_query_scroll = self.builder.get_object('edit_query_scroll')
-        edit_query_scroll.add(self.edit_query)
+        editor_scroll = self.builder.get_object('editor_scroll')
+        editor_scroll.add(self.editor)
 
         # lang_manager = GtkSource.LanguageManager()
         # lang = lang_manager.guess_language('a.sql', None)
-        # self.edit_query = self.builder.get_object('edit_query')
-        # buffer = self.edit_query.get_buffer()
+        # self.editor = self.builder.get_object('editor')
+        # buffer = self.editor.get_buffer()
         # buffer.set_language(lang)
 
         edit_pane = self.builder.get_object('edit_pane')
@@ -94,13 +94,13 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def test_query(self):
         """Test the query UI with the SQLite DB"""
-        self.edit_query.get_buffer().set_text('SHOW TABLES;')
+        self.editor.get_buffer().set_text('SHOW TABLES')
         self.db_connection.cursor().execute('USE mysql;')
         self.run_editor_query()
 
     def run_editor_query(self):
         """Run the query currently in the editor"""
-        buffer = self.edit_query.get_buffer()
+        buffer = self.editor.get_buffer()
         sel_range = buffer.get_selection_bounds()
         if not sel_range:
             sel_range = (buffer.get_start_iter(), buffer.get_end_iter())
@@ -110,8 +110,8 @@ class AppWindow(Gtk.ApplicationWindow):
         cursor.execute(query)
         result = cursor.fetchall()
 
-        edit_results = self.builder.get_object('edit_results')
-        edit_results.set_model(None)
+        results_tree = self.builder.get_object('results_tree')
+        results_tree.set_model(None)
 
         if result:
             keys = result[0].keys()
@@ -120,17 +120,18 @@ class AppWindow(Gtk.ApplicationWindow):
             for i, key in enumerate(keys):
                 cols = cols + [str]
                 control = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(key, control, text=i)
+                column = Gtk.TreeViewColumn(key.replace('_', '__'), control,
+                                            text=i)
                 column.set_resizable(True)
-                edit_results.append_column(column)
+                results_tree.append_column(column)
 
             result_list = Gtk.ListStore(*cols)
             for row in result:
                 result_list.append(row.values())
 
-            edit_results.set_model(result_list)
+            results_tree.set_model(result_list)
 
-        edit_results.show_all()
+        results_tree.show_all()
 
     def btn_run(self, button):
         """Run query on button click"""
