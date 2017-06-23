@@ -1,9 +1,14 @@
 """Helper module for persisting settings in an SQLite DB"""
+import os
 import sqlite3 # https://docs.python.org/2/library/sqlite3.html
-# from appdirs import *
-# TODO: Use appdirs' config path to store DB
+from appdirs import user_config_dir
 
-config_db = sqlite3.connect('config.db')
+appname = 'opensql-pro'
+config_dir = user_config_dir(appname)
+
+os.makedirs(config_dir, exist_ok=True)
+
+config_db = sqlite3.connect(config_dir + '/config.db')
 config_db.row_factory = sqlite3.Row
 
 def init():
