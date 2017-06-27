@@ -46,7 +46,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.add(box_connect)
 
-        self.set_icon_name('mysql-workbench')
+        self.set_icon_name('office-database')
         self.show_all()
 
         self.editor = None
@@ -97,31 +97,41 @@ class AppWindow(Gtk.ApplicationWindow):
         query = buffer.get_text(*sel_range, False)
 
         cursor = self.db_connection.cursor()
-        cursor.execute(query)
+        response = cursor.execute(query)
+        print(response)
+
         result = cursor.fetchall()
+        if result:
+            self.show_result(result, cursor.description)
+        else:
+            self.show_message(result)
+
+    def show_result(self, result, meta):
+        """Show a result set in a TreeView"""
+        keys = result[0].keys()
+        cols = []
 
         results_tree = self.builder.get_object('results_tree')
-        results_tree.set_model(None)
 
-        if result:
-            keys = result[0].keys()
-            cols = []
+        for i, key in enumerate(keys):
+            # TODO: Use proper type for column
+            cols = cols + [str]
+            control = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(key.replace('_', '__'), control,
+                                        text=i)
+            column.set_resizable(True)
+            results_tree.append_column(column)
 
-            for i, key in enumerate(keys):
-                cols = cols + [str]
-                control = Gtk.CellRendererText()
-                column = Gtk.TreeViewColumn(key.replace('_', '__'), control,
-                                            text=i)
-                column.set_resizable(True)
-                results_tree.append_column(column)
+        result_list = Gtk.ListStore(*cols)
+        for row in result:
+            result_list.append(row.values())
 
-            result_list = Gtk.ListStore(*cols)
-            for row in result:
-                result_list.append(row.values())
-
-            results_tree.set_model(result_list)
-
+        results_tree.set_model(result_list)
         results_tree.show_all()
+
+    def show_message(self, message):
+        """Show message result from query"""
+        print(message)
 
     def btn_run(self, button):
         """Run query on button click"""
@@ -182,12 +192,12 @@ class Application(Gtk.Application):
         about_dialog.set_copyright('© Alan Hardman')
         about_dialog.set_comments('A powerfully simple database client')
         about_dialog.set_website('https://git.phpizza.com/alan/opensql-pro')
-        about_dialog.set_logo_icon_name('mysql-workbench')
+        about_dialog.set_logo_icon_name('office-database')
         about_dialog.set_authors(['Alan Hardman'])
         about_dialog.connect('response', self.on_about_close)
         about_dialog.present()
 
-    def on_about_close(self, dialog, *data):
+    def on_about_close(self, dialog, response):
         """Close About dialog on button click"""
         dialog.destroy()
 
