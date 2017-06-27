@@ -46,7 +46,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.add(box_connect)
 
-        self.set_icon_name('applications-development')
+        self.set_icon_name('mysql-workbench')
         self.show_all()
 
         self.editor = None
@@ -87,15 +87,6 @@ class AppWindow(Gtk.ApplicationWindow):
         btn_run = self.builder.get_object('btn_run')
         btn_run.set_sensitive(True)
         btn_run.connect('clicked', self.btn_run)
-
-        # Run test query
-        self.test_query()
-
-    def test_query(self):
-        """Test the query UI with the SQLite DB"""
-        self.editor.get_buffer().set_text('SHOW TABLES')
-        self.db_connection.cursor().execute('USE mysql;')
-        self.run_editor_query()
 
     def run_editor_query(self):
         """Run the query currently in the editor"""
@@ -190,7 +181,15 @@ class Application(Gtk.Application):
         about_dialog.set_version('0.0.1')
         about_dialog.set_copyright('© Alan Hardman')
         about_dialog.set_comments('A powerfully simple database client')
+        about_dialog.set_website('https://git.phpizza.com/alan/opensql-pro')
+        about_dialog.set_logo_icon_name('mysql-workbench')
+        about_dialog.set_authors(['Alan Hardman'])
+        about_dialog.connect('response', self.on_about_close)
         about_dialog.present()
+
+    def on_about_close(self, dialog, *data):
+        """Close About dialog on button click"""
+        dialog.destroy()
 
     def on_quit(self, action, param):
         """Close main window, gracefully exiting"""
