@@ -74,11 +74,10 @@ class AppWindow(Gtk.ApplicationWindow):
         editor_scroll = self.builder.get_object('editor_scroll')
         editor_scroll.add(self.editor)
 
-        # lang_manager = GtkSource.LanguageManager()
-        # lang = lang_manager.guess_language('a.sql', None)
-        # self.editor = self.builder.get_object('editor')
-        # buffer = self.editor.get_buffer()
-        # buffer.set_language(lang)
+        lang_manager = GtkSource.LanguageManager()
+        lang = lang_manager.guess_language(None, 'application/sql')
+        buffer = self.editor.get_buffer()
+        buffer.set_language(lang)
 
         edit_pane = self.builder.get_object('edit_pane')
         self.add(edit_pane)
