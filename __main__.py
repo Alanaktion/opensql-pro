@@ -33,16 +33,15 @@ class AppWindow(Gtk.ApplicationWindow):
         connections = config.get_connections()
 
         for row in connections:
-            button = Gtk.Button(label=row[1])
-            button.connect('clicked', self.btn_connect_saved, row[0])
-            box_connect.pack_start(button, True, True, 0)
+            self.add_connection_btn(row)
 
+        self.conn_separator = None
         if connections:
-            separator = Gtk.Separator(valign='center')
-            box_connect.pack_start(separator, True, True, 0)
+            self.conn_separator = Gtk.Separator(valign='center')
+            box_connect.pack_end(self.conn_separator, True, True, 0)
 
-        add_button = self.builder.get_object('btn_add_connection')
-        box_connect.pack_start(add_button, True, True, 0)
+        self.conn_add_button = self.builder.get_object('btn_add_connection')
+        box_connect.pack_end(self.conn_add_button, True, True, 0)
 
         self.add(box_connect)
 
@@ -53,6 +52,16 @@ class AppWindow(Gtk.ApplicationWindow):
         self.db_connection = None
 
         self.connect('delete-event', self.on_destroy)
+
+    def add_connection_btn(self, data, show=False):
+        """Add button for saved connection"""
+        box_connect = self.builder.get_object('box_connect')
+        button = Gtk.Button(label=data[1])
+        button.connect('clicked', self.btn_connect_saved, data[0])
+        box_connect.pack_start(button, True, True, 0)
+        if show:
+            # TODO: Move separator and add button back to bottom
+            box_connect.show_all()
 
     def btn_connect_saved(self, button, data):
         """Connect to saved server on button click"""
@@ -184,6 +193,10 @@ class Application(Gtk.Application):
 
         self.window.present()
 
+    def get_window(self):
+        """Get main app window"""
+        return self.window
+
     def on_about(self, action, param):
         """Show About dialog"""
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
@@ -233,7 +246,11 @@ class AddConnectionWindow(Gtk.Window):
         port = self.builder.get_object('text_port').get_text()
         user = self.builder.get_object('text_user').get_text()
         password = self.builder.get_object('text_pass').get_text()
-        config.add_connection(name, host, port, user, password)
+        cid = config.add_connection(name, host, port, user, password)
+
+        data = config.get_connection(cid)
+        app.get_window().add_connection_btn(data, True)
+
         self.close()
 
 

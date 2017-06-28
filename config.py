@@ -24,8 +24,10 @@ def get_connections():
 def add_connection(name, host, port, user, password):
     """Add a new connection"""
     row = (name, host, port, user, password)
-    cursor().execute('''INSERT INTO connections (name, host, port,user, pass)
+    c = cursor()
+    c.execute('''INSERT INTO connections (name, host, port,user, pass)
                         VALUES(?,?,?,?,?)''', row)
+    return c.lastrowid
 
 def get_connection(key):
     """Get a connection by id"""

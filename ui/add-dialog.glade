@@ -95,6 +95,7 @@
         <property name="can_focus">True</property>
         <property name="hexpand">True</property>
         <property name="input_hints">GTK_INPUT_HINT_LOWERCASE | GTK_INPUT_HINT_NONE</property>
+        <signal name="activate" handler="btn_save" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">1</property>
@@ -108,6 +109,7 @@
         <property name="max_length">5</property>
         <property name="placeholder_text" translatable="yes">3306</property>
         <property name="input_purpose">digits</property>
+        <signal name="activate" handler="btn_save" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">1</property>
@@ -118,6 +120,7 @@
       <object class="GtkEntry" id="text_user">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <signal name="activate" handler="btn_save" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">1</property>
@@ -128,6 +131,7 @@
       <object class="GtkEntry" id="text_pass">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
+        <signal name="activate" handler="btn_save" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">1</property>
@@ -171,6 +175,7 @@
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <property name="input_purpose">name</property>
+        <signal name="activate" handler="btn_save" swapped="no"/>
       </object>
       <packing>
         <property name="left_attach">1</property>
