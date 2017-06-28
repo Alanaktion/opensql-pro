@@ -1,3 +1,7 @@
+"""
+OpenSQL Pro
+A powerfully simple database client
+"""
 import sys
 import gi
 
@@ -66,16 +70,25 @@ class AppWindow(Gtk.ApplicationWindow):
     def btn_connect_saved(self, button, data):
         """Connect to saved server on button click"""
 
+        # Connect to server
+        try:
+            conndata = config.get_connection(data)
+            self.db_connection = pymysql.connect(host=conndata[2],
+                                                 user=conndata[4],
+                                                 password=conndata[5],
+                                                 charset='utf8mb4',
+                                                 cursorclass=pymysql.cursors.DictCursor)
+        except pymysql.err.Error as err:
+            dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
+                                       Gtk.ButtonsType.OK,
+                                       "Error connecting to server")
+            dialog.format_secondary_text(err.__str__())
+            dialog.run()
+            dialog.destroy()
+            return
+
         # Remove connection UI
         self.builder.get_object('box_connect').destroy()
-
-        # Connect to server
-        conndata = config.get_connection(data)
-        self.db_connection = pymysql.connect(host=conndata[2],
-                                             user=conndata[4],
-                                             password=conndata[5],
-                                             charset='utf8mb4',
-                                             cursorclass=pymysql.cursors.DictCursor)
 
         # Add editor UI
         self.editor = GtkSource.View(wrap_mode='word-char', monospace=True,
@@ -106,27 +119,32 @@ class AppWindow(Gtk.ApplicationWindow):
         query = buffer.get_text(*sel_range, False)
 
         cursor = self.db_connection.cursor()
-        response = cursor.execute(query)
-        print(response)
-
-        result = cursor.fetchall()
-        if result:
-            self.show_result(result, cursor.description)
+        try:
+            cursor.execute(query)
+        except pymysql.err.Error as err:
+            self.show_message(err)
         else:
-            self.show_message(result)
+            result = cursor.fetchall()
+            self.show_result(result, cursor.description)
+
+    # @staticmethod
+    # def type_id_to_type(type_id):
+    #     """Return a type based on PyMySQL type_id value"""
+    #     if type_id <= pymysql.constants.FIELD_TYPE.DOUBLE:
+    #         return float
+    #     return None
 
     def show_result(self, result, meta):
         """Show a result set in a TreeView"""
-        keys = result[0].keys()
         cols = []
 
         results_tree = self.builder.get_object('results_tree')
 
-        for i, key in enumerate(keys):
-            # TODO: Use proper type for column
-            cols = cols + [str]
+        for i, col in enumerate(meta):
+            # TODO: Get correct column types on empty result set
+            cols = cols + [type(result[0][col[0]])]
             control = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(key.replace('_', '__'), control,
+            column = Gtk.TreeViewColumn(col[0].replace('_', '__'), control,
                                         text=i)
             column.set_resizable(True)
             results_tree.append_column(column)
@@ -193,10 +211,6 @@ class Application(Gtk.Application):
 
         self.window.present()
 
-    def get_window(self):
-        """Get main app window"""
-        return self.window
-
     def on_about(self, action, param):
         """Show About dialog"""
         about_dialog = Gtk.AboutDialog(transient_for=self.window, modal=True)
@@ -249,7 +263,7 @@ class AddConnectionWindow(Gtk.Window):
         cid = config.add_connection(name, host, port, user, password)
 
         data = config.get_connection(cid)
-        app.get_window().add_connection_btn(data, True)
+        app.window.add_connection_btn(data, True)
 
         self.close()
 
