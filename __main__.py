@@ -87,6 +87,10 @@ class AppWindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
 
+        # Set subtitle
+        header_bar = self.builder.get_object('header_bar')
+        header_bar.set_subtitle(conndata[4] + '@' + conndata[2])
+
         # Remove connection UI
         self.builder.get_object('box_connect').destroy()
 
