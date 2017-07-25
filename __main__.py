@@ -12,7 +12,7 @@ import config
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
-from gi.repository import Gio, Gtk, GtkSource
+from gi.repository import Gio, Gtk, GtkSource, Pango
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
@@ -142,7 +142,13 @@ class AppWindow(Gtk.ApplicationWindow):
         """Show a result set in a TreeView"""
         cols = []
 
-        results_tree = self.builder.get_object('results_tree')
+        results_scroll = self.builder.get_object('results_scroll')
+        if results_scroll.get_child():
+            results_scroll.remove(results_scroll.get_child())
+
+        results_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
+        fontdesc = Pango.FontDescription("monospace 9")
+        results_tree.modify_font(fontdesc)
 
         for i, col in enumerate(meta):
             # TODO: Get correct column types on empty result set
@@ -155,10 +161,22 @@ class AppWindow(Gtk.ApplicationWindow):
 
         result_list = Gtk.ListStore(*cols)
         for row in result:
-            result_list.append(row.values())
+            rowfinal = []
+            for val in row.values():
+                if isinstance(val, str):
+                    # Truncate strings to 60 chars, one line max
+                    oneline = val.replace('\r', '').replace('\n', '¶')
+                    if len(oneline) > 59:
+                        rowfinal.append(oneline[:59] + '…')
+                    else:
+                        rowfinal.append(oneline)
+                else:
+                    rowfinal.append(val)
+            result_list.append(rowfinal)
 
         results_tree.set_model(result_list)
-        results_tree.show_all()
+        results_scroll.add(results_tree)
+        results_scroll.show_all()
 
     def show_message(self, message):
         """Show message result from query"""
