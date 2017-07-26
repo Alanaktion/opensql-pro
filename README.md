@@ -15,7 +15,7 @@ python .
 ### macOS
 
 ```bash
-brew install python3 gtk+3 gtksourceview
+brew install python3 gtk+3 gtksourceview3
 brew install pygobject3 --with-python3
 pip3 install pymysql appdirs
 python3 .
