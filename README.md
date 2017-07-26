@@ -21,15 +21,15 @@ pip3 install pymysql appdirs
 python3 .
 ```
 
-### Ubuntu 17.10
-
-Since switching to Gnome, Ubuntu is much easier to support out of the box now!
+### Ubuntu
 
 ```bash
 sudo apt install python3-pip
 sudo -H pip3 install pymysql appdirs
 python3 .
 ```
+
+Ubuntu 16.04 works fine, but has a display issue where the source view starts completely collapsed. Ubuntu 17.10 daily builds do not have this issue.
 
 ### Windows
 
