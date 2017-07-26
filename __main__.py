@@ -81,8 +81,9 @@ class AppWindow(Gtk.ApplicationWindow):
         except pymysql.err.Error as err:
             dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
                                        Gtk.ButtonsType.OK,
-                                       "Error connecting to server")
+                                       'Error connecting to server')
             dialog.format_secondary_text(err.__str__())
+            dialog.set_title('Connection Error')
             dialog.run()
             dialog.destroy()
             return
@@ -93,6 +94,20 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # Remove connection UI
         self.builder.get_object('box_connect').destroy()
+
+        # Update database list
+        combo_db = self.builder.get_object('combo_db')
+        cursor = self.db_connection.cursor()
+        cursor.execute('SHOW DATABASES')
+        db_result = cursor.fetchall()
+        db_store = Gtk.ListStore(str)
+        for row in db_result:
+            db_store.append(row.values())
+        combo_db.set_model(db_store)
+        combo_db.connect('changed', self.on_db_change)
+        combo_db.set_sensitive(True)
+
+        # TODO: Restore last used database for each connection
 
         # Add editor UI
         self.editor = GtkSource.View(wrap_mode='word-char', monospace=True,
@@ -186,6 +201,41 @@ class AppWindow(Gtk.ApplicationWindow):
         """Run query on button click"""
         self.run_editor_query()
 
+    def on_db_change(self, combo):
+        """Select database from combo box"""
+        tree_iter = combo.get_active_iter()
+        if tree_iter == None:
+            return
+
+        # Select new database
+        model = combo.get_model()
+        db = model[tree_iter][0]
+        self.db_connection.select_db(db)
+
+        # Update table list
+        cursor = self.db_connection.cursor()
+        cursor.execute('SHOW TABLES')
+        tables = cursor.fetchall()
+
+        table_scroll = self.builder.get_object('table_scroll')
+        if table_scroll.get_child():
+            table_scroll.remove(table_scroll.get_child())
+
+        table_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
+        fontdesc = Pango.FontDescription("monospace 9")
+        table_tree.modify_font(fontdesc)
+
+        control = Gtk.CellRendererText()
+        column = Gtk.TreeViewColumn('Tables', control, text=0)
+        table_tree.append_column(column)
+        table_list = Gtk.ListStore(str)
+        for row in tables:
+            table_list.append(row.values())
+
+        table_tree.set_model(table_list)
+        table_scroll.add(table_tree)
+        table_scroll.show_all()
+
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
         add_dialog = AddConnectionWindow(transient_for=self, modal=True,
@@ -216,8 +266,8 @@ class Application(Gtk.Application):
         action.connect('activate', self.on_about)
         self.add_action(action)
 
-        action = Gio.SimpleAction.new("quit", None)
-        action.connect("activate", self.on_quit)
+        action = Gio.SimpleAction.new('quit', None)
+        action.connect('activate', self.on_quit)
         self.add_action(action)
 
         builder = Gtk.Builder()
@@ -230,6 +280,12 @@ class Application(Gtk.Application):
             # Windows are associated with the application
             # when the last one is closed the application shuts down
             self.window = AppWindow(application=self, title='OpenSQL Pro')
+
+            # Bind F9 to Run
+            # action = Gio.SimpleAction.new('run', None)
+            # action.connect('activate', self.window.run_editor_query)
+            # self.set_accels_for_action('run', ['F9'])
+            # self.add_action(action)
 
         self.window.present()
 

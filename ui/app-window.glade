@@ -40,6 +40,24 @@
         </child>
       </object>
     </child>
+    <child>
+      <object class="GtkComboBox" id="combo_db">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="sensitive">False</property>
+        <property name="tooltip_text" translatable="yes">Database</property>
+        <child>
+          <object class="GtkCellRendererText"/>
+          <attributes>
+            <attribute name="text">0</attribute>
+          </attributes>
+        </child>
+      </object>
+      <packing>
+        <property name="pack_type">end</property>
+        <property name="position">1</property>
+      </packing>
+    </child>
   </object>
 
   <object class="GtkButtonBox" id="box_connect">
@@ -68,12 +86,24 @@
   <object class="GtkPaned" id="edit_pane">
     <property name="visible">True</property>
     <property name="can_focus">True</property>
-    <property name="orientation">vertical</property>
+    <property name="orientation">horizontal</property>
     <child>
-      <object class="GtkScrolledWindow" id="editor_scroll" />
+      <object class="GtkScrolledWindow" id="table_scroll">
+        <property name="width_request">160</property>
+      </object>
     </child>
     <child>
-      <object class="GtkScrolledWindow" id="results_scroll" />
+      <object class="GtkPaned">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkScrolledWindow" id="editor_scroll" />
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="results_scroll" />
+        </child>
+      </object>
     </child>
   </object>
 </interface>
