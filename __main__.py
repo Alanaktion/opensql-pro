@@ -253,7 +253,7 @@ class AppWindow(Gtk.ApplicationWindow):
         """Handle table selection"""
         model, treeiter = selection.get_selected()
         if treeiter != None:
-            print("You selected", self.load_table_contents(model[treeiter][0]))
+            self.load_table_contents(model[treeiter][0])
 
     def load_table_contents(self, table_name):
         """Load and display table contents"""
@@ -265,10 +265,10 @@ class AppWindow(Gtk.ApplicationWindow):
         try:
             cursor.execute(query)
         except pymysql.err.Error as err:
-            self.show_message(err)
+            print(err.__str__())
+            return
         else:
             result = cursor.fetchall()
-            self.show_result(result, cursor.description)
 
         content_scroll = self.builder.get_object('content_scroll')
         if content_scroll.get_child():
