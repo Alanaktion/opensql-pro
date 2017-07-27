@@ -12,7 +12,7 @@ import config
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
-from gi.repository import Gio, Gtk, GtkSource, Pango
+from gi.repository import Gio, Gtk, Gdk, GtkSource, Pango
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
     sys.exit('Gtk 3.2 is required')
@@ -55,7 +55,19 @@ class AppWindow(Gtk.ApplicationWindow):
         self.editor = None
         self.db_connection = None
 
+        self.connect('key_press_event', self.on_key_press)
         self.connect('delete-event', self.on_destroy)
+
+    def on_key_press(self, widget, event, user_data=None):
+        """Handle key press"""
+        key = Gdk.keyval_name(event.keyval)
+        if key == 'F5':
+            self.run_editor_query()
+            return True
+        if key == 'F9':
+            self.run_editor_query()
+            return True
+        return False
 
     def add_connection_btn(self, data, show=False):
         """Add button for saved connection"""
@@ -266,6 +278,10 @@ class Application(Gtk.Application):
         action.connect('activate', self.on_about)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new('preferences', None)
+        action.connect('activate', self.on_preferences)
+        self.add_action(action)
+
         action = Gio.SimpleAction.new('quit', None)
         action.connect('activate', self.on_quit)
         self.add_action(action)
@@ -306,6 +322,12 @@ class Application(Gtk.Application):
         """Close About dialog on button click"""
         dialog.destroy()
 
+    def on_preferences(self, action, param):
+        """Show Preferences dialog"""
+        dialog = PreferencesWindow(transient_for=self.window, modal=True,
+                                   skip_taskbar_hint=True)
+        dialog.present()
+
     def on_quit(self, action, param):
         """Close main window, gracefully exiting"""
         self.window.close()
@@ -327,12 +349,21 @@ class AddConnectionWindow(Gtk.Window):
         input_grid = self.builder.get_object('input_grid')
         self.add(input_grid)
 
-    def btn_cancel(self, button):
-        """Cancel adding a connection from button click"""
-        self.close()
+        self.connect('key_press_event', self.on_key_press)
 
-    def btn_save(self, button):
-        """Save new connection from button click"""
+    def on_key_press(self, widget, event, user_data=None):
+        """Handle key press"""
+        key = Gdk.keyval_name(event.keyval)
+        if key == 'Escape':
+            self.close()
+            return True
+        if key == 'Enter':
+            self.save_connection()
+            return True
+        return False
+
+    def save_connection(self):
+        """Save connection and close window"""
         name = self.builder.get_object('text_name').get_text()
         host = self.builder.get_object('text_host').get_text()
         port = self.builder.get_object('text_port').get_text()
@@ -342,6 +373,55 @@ class AddConnectionWindow(Gtk.Window):
 
         data = config.get_connection(cid)
         app.window.add_connection_btn(data, True)
+
+        self.close()
+
+    def btn_cancel(self, button):
+        """Cancel adding a connection from button click"""
+        self.close()
+
+    def btn_save(self, button):
+        """Save new connection from button click"""
+        self.save_connection()
+
+
+class PreferencesWindow(Gtk.Window):
+    """Preferences modal window"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.builder = Gtk.Builder()
+        self.builder.add_from_file('ui/preferences-dialog.glade')
+        self.builder.connect_signals(self)
+
+        header_bar = self.builder.get_object('header_bar')
+        self.set_titlebar(header_bar)
+
+        input_grid = self.builder.get_object('input_grid')
+        self.add(input_grid)
+
+        self.connect('key_press_event', self.on_key_press)
+
+    def on_key_press(self, widget, event, user_data=None):
+        """Handle key press"""
+        key = Gdk.keyval_name(event.keyval)
+        if key == 'Escape':
+            self.close()
+            return True
+        if key == 'Enter':
+            self.save_connection()
+            return True
+        return False
+
+    def btn_cancel(self, button):
+        """Cancel adding a connection from button click"""
+        self.close()
+
+    def btn_save(self, button):
+        """Save new connection from button click"""
+
+        # TODO: save and apply new settings
 
         self.close()
 
