@@ -297,12 +297,6 @@ class Application(Gtk.Application):
             # when the last one is closed the application shuts down
             self.window = AppWindow(application=self, title='OpenSQL Pro')
 
-            # Bind F9 to Run
-            # action = Gio.SimpleAction.new('run', None)
-            # action.connect('activate', self.window.run_editor_query)
-            # self.set_accels_for_action('run', ['F9'])
-            # self.add_action(action)
-
         self.window.present()
 
     def on_about(self, action, param):
@@ -410,9 +404,16 @@ class PreferencesWindow(Gtk.Window):
             self.close()
             return True
         if key == 'Enter':
-            self.save_connection()
+            self.save_preferences()
             return True
         return False
+
+    def save_preferences(self):
+        """Save changed preferences"""
+
+        # TODO: Save changed preferences
+
+        self.close()
 
     def btn_cancel(self, button):
         """Cancel adding a connection from button click"""
@@ -420,10 +421,7 @@ class PreferencesWindow(Gtk.Window):
 
     def btn_save(self, button):
         """Save new connection from button click"""
-
-        # TODO: save and apply new settings
-
-        self.close()
+        self.save_preferences()
 
 
 if __name__ == '__main__':

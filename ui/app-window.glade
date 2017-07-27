@@ -89,20 +89,93 @@
     <property name="orientation">horizontal</property>
     <child>
       <object class="GtkScrolledWindow" id="table_scroll">
-        <property name="width_request">160</property>
+        <property name="width_request">180</property>
       </object>
     </child>
     <child>
-      <object class="GtkPaned">
+      <object class="GtkNotebook">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
-        <property name="orientation">vertical</property>
+
         <child>
-          <object class="GtkScrolledWindow" id="editor_scroll" />
+          <object class="GtkPaned">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkScrolledWindow" id="editor_scroll" />
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="results_scroll" />
+            </child>
+          </object>
         </child>
+        <child type="tab">
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">SQL</property>
+          </object>
+          <packing>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
+
         <child>
-          <object class="GtkScrolledWindow" id="results_scroll" />
+          <object class="GtkScrolledWindow" id="content_scroll" />
+          <packing>
+            <property name="position">1</property>
+          </packing>
         </child>
+        <child type="tab">
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Content</property>
+          </object>
+          <packing>
+            <property name="position">1</property>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
+
+        <child>
+          <object class="GtkPaned">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkScrolledWindow" id="structure_scroll" />
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Indexes</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="structure_index_scroll" />
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child type="tab">
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Structure</property>
+          </object>
+          <packing>
+            <property name="tab_fill">False</property>
+          </packing>
+        </child>
+
       </object>
     </child>
   </object>
