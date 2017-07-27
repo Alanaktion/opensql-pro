@@ -245,8 +245,69 @@ class AppWindow(Gtk.ApplicationWindow):
             table_list.append(row.values())
 
         table_tree.set_model(table_list)
+        table_tree.get_selection().connect('changed', self.on_table_select)
         table_scroll.add(table_tree)
         table_scroll.show_all()
+
+    def on_table_select(self, selection):
+        """Handle table selection"""
+        model, treeiter = selection.get_selected()
+        if treeiter != None:
+            print("You selected", self.load_table_contents(model[treeiter][0]))
+
+    def load_table_contents(self, table_name):
+        """Load and display table contents"""
+
+        # TODO: Quote table name and allow variable row limit
+        query = "SELECT * FROM `" + table_name + "` LIMIT 300"
+
+        cursor = self.db_connection.cursor()
+        try:
+            cursor.execute(query)
+        except pymysql.err.Error as err:
+            self.show_message(err)
+        else:
+            result = cursor.fetchall()
+            self.show_result(result, cursor.description)
+
+        content_scroll = self.builder.get_object('content_scroll')
+        if content_scroll.get_child():
+            content_scroll.remove(content_scroll.get_child())
+
+        content_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
+        fontdesc = Pango.FontDescription("monospace 9")
+        content_tree.modify_font(fontdesc)
+
+        cols = []
+        for i, col in enumerate(cursor.description):
+            # TODO: Get correct column types on empty result set
+            cols = cols + [type(result[0][col[0]])]
+            control = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn(col[0].replace('_', '__'), control,
+                                        text=i)
+            column.set_resizable(True)
+            content_tree.append_column(column)
+
+        content_list = Gtk.ListStore(*cols)
+        for row in result:
+            rowfinal = []
+            for val in row.values():
+                if isinstance(val, str):
+                    # Truncate strings to 60 chars, one line max
+                    oneline = val.replace('\r', '').replace('\n', '¶')
+                    if len(oneline) > 59:
+                        rowfinal.append(oneline[:59] + '…')
+                    else:
+                        rowfinal.append(oneline)
+                else:
+                    rowfinal.append(val)
+            content_list.append(rowfinal)
+
+        content_tree.set_model(content_list)
+        content_scroll.add(content_tree)
+        content_scroll.show_all()
+
+
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
