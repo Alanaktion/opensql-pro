@@ -55,6 +55,8 @@ def value_to_renderable(val):
         return val
     if isinstance(val, datetime.datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, bytes):
+        return '<BINARY>'
 
 def result_to_liststore(result, description, treeview=None, char_limit=60):
     """Convert PyMySQL result to GtkListStore"""
