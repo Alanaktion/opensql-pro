@@ -51,13 +51,9 @@ def int_to_type(type_id):
 def value_to_renderable(val):
     """Convert a PyMySQL result value to a renderable format"""
     # TODO: Handle None values if it is possible to encounter one here
-    if type(val) == int:
+    if isinstance(val, (int, float, str)):
         return val
-    if type(val) == float:
-        return val
-    if type(val) == str:
-        return val
-    if type(val) == datetime.datetime:
+    if isinstance(val, datetime.datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
 
 def result_to_liststore(result, description, treeview=None, char_limit=60):

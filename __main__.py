@@ -158,13 +158,6 @@ class AppWindow(Gtk.ApplicationWindow):
             result = cursor.fetchall()
             self.show_result(result, cursor.description)
 
-    # @staticmethod
-    # def type_id_to_type(type_id):
-    #     """Return a type based on PyMySQL type_id value"""
-    #     if type_id <= pymysql.constants.FIELD_TYPE.DOUBLE:
-    #         return float
-    #     return None
-
     def show_result(self, result, meta):
         """Show a result set in a TreeView"""
         results_scroll = self.builder.get_object('results_scroll')
@@ -196,8 +189,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
         # Select new database
         model = combo.get_model()
-        db = model[tree_iter][0]
-        self.db_connection.select_db(db)
+        db_name = model[tree_iter][0]
+        self.db_connection.select_db(db_name)
 
         # Update table list
         cursor = self.db_connection.cursor()
@@ -208,7 +201,7 @@ class AppWindow(Gtk.ApplicationWindow):
         if table_scroll.get_child():
             table_scroll.remove(table_scroll.get_child())
 
-        table_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
+        table_tree = Gtk.TreeView(enable_search=True)
         fontdesc = Pango.FontDescription("monospace 9")
         table_tree.modify_font(fontdesc)
 
@@ -220,6 +213,7 @@ class AppWindow(Gtk.ApplicationWindow):
             table_list.append(row.values())
 
         table_tree.set_model(table_list)
+        table_tree.set_search_column(0)
         table_tree.get_selection().connect('changed', self.on_table_select)
         table_scroll.add(table_tree)
         table_scroll.show_all()
