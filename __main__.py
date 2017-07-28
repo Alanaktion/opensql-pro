@@ -8,14 +8,14 @@ import gi
 import pymysql.cursors
 import pymysql
 
-import config
+from opensql import config, dbhelper
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
 from gi.repository import Gio, Gtk, Gdk, GtkSource, Pango
 
-if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 2:
-    sys.exit('Gtk 3.2 is required')
+if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 18:
+    sys.exit('Gtk 3.18 or higher is required')
 
 class AppWindow(Gtk.ApplicationWindow):
     """Main application window"""
@@ -167,8 +167,6 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def show_result(self, result, meta):
         """Show a result set in a TreeView"""
-        cols = []
-
         results_scroll = self.builder.get_object('results_scroll')
         if results_scroll.get_child():
             results_scroll.remove(results_scroll.get_child())
@@ -177,30 +175,7 @@ class AppWindow(Gtk.ApplicationWindow):
         fontdesc = Pango.FontDescription("monospace 9")
         results_tree.modify_font(fontdesc)
 
-        for i, col in enumerate(meta):
-            # TODO: Get correct column types on empty result set
-            cols = cols + [type(result[0][col[0]])]
-            control = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(col[0].replace('_', '__'), control,
-                                        text=i)
-            column.set_resizable(True)
-            results_tree.append_column(column)
-
-        result_list = Gtk.ListStore(*cols)
-        for row in result:
-            rowfinal = []
-            for val in row.values():
-                if isinstance(val, str):
-                    # Truncate strings to 60 chars, one line max
-                    oneline = val.replace('\r', '').replace('\n', '¶')
-                    if len(oneline) > 59:
-                        rowfinal.append(oneline[:59] + '…')
-                    else:
-                        rowfinal.append(oneline)
-                else:
-                    rowfinal.append(val)
-            result_list.append(rowfinal)
-
+        result_list = dbhelper.result_to_liststore(result, meta, results_tree)
         results_tree.set_model(result_list)
         results_scroll.add(results_tree)
         results_scroll.show_all()
@@ -278,36 +253,11 @@ class AppWindow(Gtk.ApplicationWindow):
         fontdesc = Pango.FontDescription("monospace 9")
         content_tree.modify_font(fontdesc)
 
-        cols = []
-        for i, col in enumerate(cursor.description):
-            # TODO: Get correct column types on empty result set
-            cols = cols + [type(result[0][col[0]])]
-            control = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(col[0].replace('_', '__'), control,
-                                        text=i)
-            column.set_resizable(True)
-            content_tree.append_column(column)
-
-        content_list = Gtk.ListStore(*cols)
-        for row in result:
-            rowfinal = []
-            for val in row.values():
-                if isinstance(val, str):
-                    # Truncate strings to 60 chars, one line max
-                    oneline = val.replace('\r', '').replace('\n', '¶')
-                    if len(oneline) > 59:
-                        rowfinal.append(oneline[:59] + '…')
-                    else:
-                        rowfinal.append(oneline)
-                else:
-                    rowfinal.append(val)
-            content_list.append(rowfinal)
-
+        content_list = dbhelper.result_to_liststore(result, cursor.description,
+                                                    content_tree)
         content_tree.set_model(content_list)
         content_scroll.add(content_tree)
         content_scroll.show_all()
-
-
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""

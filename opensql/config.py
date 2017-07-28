@@ -3,8 +3,8 @@ import os
 import sqlite3 # https://docs.python.org/2/library/sqlite3.html
 from appdirs import user_config_dir
 
-appname = 'opensql-pro'
-config_dir = user_config_dir(appname)
+APPNAME = 'opensql-pro'
+config_dir = user_config_dir(APPNAME)
 
 os.makedirs(config_dir, exist_ok=True)
 
