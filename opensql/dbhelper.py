@@ -50,13 +50,13 @@ def int_to_type(type_id):
 
 def value_to_renderable(val):
     """Convert a PyMySQL result value to a renderable format"""
-    # TODO: Handle None values if it is possible to encounter one here
-    if isinstance(val, (int, float, str)):
-        return val
     if isinstance(val, datetime.datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
+    if isinstance(val, time.time):
+        return val.strftime('%H:%M:%S')
     if isinstance(val, bytes):
         return '<BINARY>'
+    return val
 
 def result_to_liststore(result, description, treeview=None, char_limit=60):
     """Convert PyMySQL result to GtkListStore"""
