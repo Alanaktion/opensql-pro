@@ -52,8 +52,6 @@ def value_to_renderable(val):
     """Convert a PyMySQL result value to a renderable format"""
     if isinstance(val, datetime.datetime):
         return val.strftime('%Y-%m-%d %H:%M:%S')
-    if isinstance(val, time.time):
-        return val.strftime('%H:%M:%S')
     if isinstance(val, bytes):
         return '<BINARY>'
     return val
