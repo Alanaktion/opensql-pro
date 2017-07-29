@@ -33,21 +33,17 @@ class AppWindow(Gtk.ApplicationWindow):
         self.set_titlebar(header_bar)
 
         # Display connection list
-        box_connect = self.builder.get_object('box_connect')
+        box_conns = self.builder.get_object('box_connection_container')
+        box_connect = self.builder.get_object('box_connection_list')
         connections = config.get_connections()
 
         for row in connections:
             self.add_connection_btn(row)
 
-        self.conn_separator = None
-        if connections:
-            self.conn_separator = Gtk.Separator(valign='center')
-            box_connect.pack_end(self.conn_separator, True, True, 0)
-
         self.conn_add_button = self.builder.get_object('btn_add_connection')
         box_connect.pack_end(self.conn_add_button, True, True, 0)
 
-        self.add(box_connect)
+        self.add(box_conns)
 
         self.set_icon_name('office-database')
         self.show_all()
@@ -71,10 +67,10 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def add_connection_btn(self, data, show=False):
         """Add button for saved connection"""
-        box_connect = self.builder.get_object('box_connect')
+        box_connect = self.builder.get_object('box_connection_list')
         button = Gtk.Button(label=data[1])
         button.connect('clicked', self.btn_connect_saved, data[0])
-        box_connect.pack_start(button, True, True, 0)
+        box_connect.pack_end(button, True, True, 0)
         if show:
             # TODO: Move separator and add button back to bottom
             box_connect.show_all()
@@ -105,7 +101,7 @@ class AppWindow(Gtk.ApplicationWindow):
         header_bar.set_subtitle(conndata[4] + '@' + conndata[2])
 
         # Remove connection UI
-        self.builder.get_object('box_connect').destroy()
+        self.builder.get_object('box_connection_container').destroy()
 
         # Update database list
         combo_db = self.builder.get_object('combo_db')

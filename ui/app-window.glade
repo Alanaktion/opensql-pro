@@ -60,27 +60,57 @@
     </child>
   </object>
 
-  <object class="GtkButtonBox" id="box_connect">
+  <object class="GtkAlignment" id="box_connection_container">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="orientation">vertical</property>
-    <property name="spacing">5</property>
-    <property name="homogeneous">True</property>
-    <property name="layout_style">center</property>
     <child>
-      <object class="GtkLabel">
+      <object class="GtkBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Connections</property>
+        <property name="orientation">vertical</property>
+        <property name="homogeneous">True</property>
+        <child>
+          <object class="GtkButtonBox" id="box_connection_list">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Connections</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <property name="layout_style">start</property>
+            <child>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="valign">center</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="btn_add_connection">
+                <property name="label" translatable="yes">Add Connection</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="btn_add_connection" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </child>
-  </object>
-  <object class="GtkButton" id="btn_add_connection">
-    <property name="label" translatable="yes">Add Connection</property>
-    <property name="visible">True</property>
-    <property name="can_focus">True</property>
-    <property name="receives_default">True</property>
-    <signal name="clicked" handler="btn_add_connection" swapped="no"/>
   </object>
 
   <object class="GtkPaned" id="edit_pane">
