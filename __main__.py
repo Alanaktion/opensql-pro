@@ -3,6 +3,7 @@ OpenSQL Pro
 A powerfully simple database client
 """
 import sys
+import threading
 import gi
 
 import pymysql.cursors
@@ -12,7 +13,7 @@ from opensql import config, dbhelper
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
-from gi.repository import Gio, Gtk, Gdk, GtkSource, Pango
+from gi.repository import Gio, Gtk, GLib, Gdk, GtkSource, Pango
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 18:
     sys.exit('Gtk 3.18 or higher is required')
@@ -145,14 +146,32 @@ class AppWindow(Gtk.ApplicationWindow):
             sel_range = (buffer.get_start_iter(), buffer.get_end_iter())
         query = buffer.get_text(*sel_range, False)
 
-        cursor = self.db_connection.cursor()
-        try:
-            cursor.execute(query)
-        except pymysql.err.Error as err:
-            self.show_message(err)
-        else:
-            result = cursor.fetchall()
-            self.show_result(result, cursor.description)
+        # Show spinner in result container
+        results_scroll = self.builder.get_object('results_scroll')
+        if results_scroll.get_child():
+            results_scroll.remove(results_scroll.get_child())
+
+        c_align = Gtk.Alignment(halign='center', valign='center')
+        c_spin = Gtk.Spinner()
+        c_spin.start()
+        c_align.add(c_spin)
+        results_scroll.add(c_align)
+        results_scroll.show_all()
+
+        def run_query(query, window):
+            """Execute query and call show_result"""
+            cursor = self.db_connection.cursor()
+            try:
+                cursor.execute(query)
+            except pymysql.err.Error as err:
+                GLib.idle_add(window.show_message, err)
+            else:
+                result = cursor.fetchall()
+                GLib.idle_add(window.show_result, result, cursor.description)
+
+        thread = threading.Thread(target=run_query, args=[query, self])
+        thread.daemon = True
+        thread.start()
 
     def show_result(self, result, meta):
         """Show a result set in a TreeView"""
@@ -223,31 +242,51 @@ class AppWindow(Gtk.ApplicationWindow):
     def load_table_contents(self, table_name):
         """Load and display table contents"""
 
-        # TODO: Quote table name and allow variable row limit
-        query = "SELECT * FROM `" + table_name + "` LIMIT 300"
-
-        cursor = self.db_connection.cursor()
-        try:
-            cursor.execute(query)
-        except pymysql.err.Error as err:
-            print(err.__str__())
-            return
-        else:
-            result = cursor.fetchall()
-
         content_scroll = self.builder.get_object('content_scroll')
         if content_scroll.get_child():
             content_scroll.remove(content_scroll.get_child())
 
-        content_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
-        fontdesc = Pango.FontDescription("monospace 9")
-        content_tree.modify_font(fontdesc)
-
-        content_list = dbhelper.result_to_liststore(result, cursor.description,
-                                                    content_tree)
-        content_tree.set_model(content_list)
-        content_scroll.add(content_tree)
+        # Show spinner
+        c_align = Gtk.Alignment(halign='center', valign='center')
+        c_spin = Gtk.Spinner()
+        c_spin.start()
+        c_align.add(c_spin)
+        content_scroll.add(c_align)
         content_scroll.show_all()
+
+        def content_query(table_name):
+            """Run table content SELECT query"""
+            # TODO: Quote table name and allow variable row limit
+            query = "SELECT * FROM `" + table_name + "` LIMIT 300"
+            cursor = self.db_connection.cursor()
+            try:
+                cursor.execute(query)
+            except pymysql.err.Error as err:
+                print(err.__str__())
+                return
+            else:
+                result = cursor.fetchall()
+                GLib.idle_add(content_display, result, cursor.description)
+
+        def content_display(result, meta):
+            """Render query result"""
+            content_tree = Gtk.TreeView(enable_grid_lines=True,
+                                        enable_search=False)
+            fontdesc = Pango.FontDescription("monospace 9")
+            content_tree.modify_font(fontdesc)
+
+            content_list = dbhelper.result_to_liststore(result, meta,
+                                                        content_tree)
+            content_tree.set_model(content_list)
+
+            if content_scroll.get_child():
+                content_scroll.remove(content_scroll.get_child())
+            content_scroll.add(content_tree)
+            content_scroll.show_all()
+
+        thread = threading.Thread(target=content_query, args=[table_name])
+        thread.daemon = True
+        thread.start()
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
