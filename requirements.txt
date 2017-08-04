@@ -1,0 +1,3 @@
+appdirs
+pygobject>=3.18
+PyMySQL

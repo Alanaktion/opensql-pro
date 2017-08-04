@@ -1,21 +1,22 @@
 """Helper module for persisting settings in an SQLite DB"""
 import os
-import sqlite3 # https://docs.python.org/2/library/sqlite3.html
+import sqlite3
 from appdirs import user_config_dir
 
 APPNAME = 'opensql-pro'
-config_dir = user_config_dir(APPNAME)
+CONFIG_DIR = user_config_dir(APPNAME)
 
-os.makedirs(config_dir, exist_ok=True)
+os.makedirs(CONFIG_DIR, exist_ok=True)
 
-config_db = sqlite3.connect(config_dir + '/config.db')
-config_db.row_factory = sqlite3.Row
+CONFIG_DB = sqlite3.connect(CONFIG_DIR + '/config.db')
+CONFIG_DB.row_factory = sqlite3.Row
 
 def init():
     """Initialize configuration database"""
     cursor().execute('''CREATE TABLE IF NOT EXISTS connections
                         (id integer primary key,
                         name, host, port, user, pass)''')
+    cursor().execute('CREATE TABLE IF NOT EXISTS config (key, val)')
 
 def get_connections():
     """Get a list of all saved connections"""
@@ -24,10 +25,10 @@ def get_connections():
 def add_connection(name, host, port, user, password):
     """Add a new connection"""
     row = (name, host, port, user, password)
-    c = cursor()
-    c.execute('''INSERT INTO connections (name, host, port,user, pass)
+    cur = cursor()
+    cur.execute('''INSERT INTO connections (name, host, port,user, pass)
                         VALUES(?,?,?,?,?)''', row)
-    return c.lastrowid
+    return cur.lastrowid
 
 def get_connection(key):
     """Get a connection by id"""
@@ -38,12 +39,24 @@ def rm_connection(key):
     """Remove a connection by id"""
     cursor().execute('DELETE FROM connections WHERE id = ?', str(key))
 
+def get_config(key, default=None):
+    """Get a configuration value by key"""
+    cur = cursor()
+    cur.execute('SELECT val FROM config WHERE key = ?', key)
+    val = cur.fetchone()['val']
+    if val is None:
+        return default
+    return val
+
+def set_config(key, val):
+    """Set a configuration value by key"""
+    params = (key, val)
+    return cursor().execute('UPDATE config SET val = ? WHERE key = ?', params)
+
 def cursor():
     """Get the database cursor instance"""
-    global config_db
-    return config_db.cursor()
+    return CONFIG_DB.cursor()
 
 def commit():
     """Write changes to the database file"""
-    global config_db
-    return config_db.commit()
+    return CONFIG_DB.commit()

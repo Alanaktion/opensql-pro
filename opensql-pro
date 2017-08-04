@@ -4,7 +4,6 @@ OpenSQL Pro
 A powerfully simple database client
 """
 import sys
-import os
 import threading
 import gi
 
@@ -201,7 +200,7 @@ class AppWindow(Gtk.ApplicationWindow):
     def on_db_change(self, combo):
         """Select database from combo box"""
         tree_iter = combo.get_active_iter()
-        if tree_iter == None:
+        if tree_iter is None:
             return
 
         # Select new database
@@ -431,17 +430,8 @@ class PreferencesWindow(Gtk.Window):
         self.builder.add_from_file('ui/preferences-dialog.glade')
         self.builder.connect_signals(self)
 
-        # Initialize control states from GSettings
-        source = Gio.SettingsSchemaSource.new_from_directory(
-            os.path.expanduser("~/.schemas"),
-            Gio.SettingsSchemaSource.get_default(),
-            False)
-
-        schema = source.lookup('com.phpizza.opensql-pro', False)
-        settings = Gio.Settings.new_full(schema, None, None)
-        overlay_switch = self.builder.get_object('overlay_switch')
-        settings.bind('overlay-scrollbars', overlay_switch, 'active',
-                     Gio.SettingsBindFlags.DEFAULT)
+        # Initialize control states
+        # TODO: initialize states from config
 
         # Final UI initialization
         header_bar = self.builder.get_object('header_bar')
