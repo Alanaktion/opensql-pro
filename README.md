@@ -9,6 +9,9 @@ OpenSQL Pro is built on Python 3 with PyGObject. It requires Gtk 3.20+ with GtkS
 ```bash
 sudo pacman -S python pygobject-devel gtk3
 sudo -H pip install pymysql appdirs
+mkdir -p ~/.schemas
+cp data/* ~/.schemas/
+glib-compile-schemas ~/.schemas/
 python .
 ```
 
@@ -26,6 +29,9 @@ python3 .
 ```bash
 sudo apt install python3-pip
 sudo -H pip3 install pymysql appdirs
+mkdir -p ~/.schemas
+cp data/* ~/.schemas/
+glib-compile-schemas ~/.schemas/
 python3 .
 ```
 

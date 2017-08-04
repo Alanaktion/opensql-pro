@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/com/phpizza/opensql-pro/" id="com.phpizza.opensql-pro">
+        <key name="overlay-scrollbars" type="b">
+            <default>true</default>
+            <summary>Enable overlay scrollbars</summary>
+            <description></description>
+        </key>
+    </schema>
+</schemalist>

@@ -4,6 +4,7 @@ OpenSQL Pro
 A powerfully simple database client
 """
 import sys
+import os
 import threading
 import gi
 
@@ -430,6 +431,19 @@ class PreferencesWindow(Gtk.Window):
         self.builder.add_from_file('ui/preferences-dialog.glade')
         self.builder.connect_signals(self)
 
+        # Initialize control states from GSettings
+        source = Gio.SettingsSchemaSource.new_from_directory(
+            os.path.expanduser("~/.schemas"),
+            Gio.SettingsSchemaSource.get_default(),
+            False)
+
+        schema = source.lookup('com.phpizza.opensql-pro', False)
+        settings = Gio.Settings.new_full(schema, None, None)
+        overlay_switch = self.builder.get_object('overlay_switch')
+        settings.bind('overlay-scrollbars', overlay_switch, 'active',
+                     Gio.SettingsBindFlags.DEFAULT)
+
+        # Final UI initialization
         header_bar = self.builder.get_object('header_bar')
         self.set_titlebar(header_bar)
 
@@ -444,25 +458,11 @@ class PreferencesWindow(Gtk.Window):
         if key == 'Escape':
             self.close()
             return True
-        if key == 'Enter':
-            self.save_preferences()
-            return True
         return False
 
-    def save_preferences(self):
-        """Save changed preferences"""
-
-        # TODO: Save changed preferences
-
-        self.close()
-
-    def btn_cancel(self, button):
-        """Cancel adding a connection from button click"""
-        self.close()
-
-    def btn_save(self, button):
-        """Save new connection from button click"""
-        self.save_preferences()
+    def overlay_switch(self, widget, event, user_data=None):
+        """Handle overlay scrollbar switch toggle"""
+        print(event)
 
 
 if __name__ == '__main__':
