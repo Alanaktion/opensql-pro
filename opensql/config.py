@@ -16,7 +16,8 @@ def init():
     cursor().execute('''CREATE TABLE IF NOT EXISTS connections
                         (id integer primary key,
                         name, host, port, user, pass)''')
-    cursor().execute('CREATE TABLE IF NOT EXISTS config (key, val)')
+    cursor().execute('''CREATE TABLE IF NOT EXISTS config
+                        (id integer primary key, key, val)''')
 
 def get_connections():
     """Get a list of all saved connections"""
@@ -27,7 +28,7 @@ def add_connection(name, host, port, user, password):
     row = (name, host, port, user, password)
     cur = cursor()
     cur.execute('''INSERT INTO connections (name, host, port,user, pass)
-                        VALUES(?,?,?,?,?)''', row)
+                   VALUES(?,?,?,?,?)''', row)
     return cur.lastrowid
 
 def get_connection(key):
@@ -42,16 +43,22 @@ def rm_connection(key):
 def get_config(key, default=None):
     """Get a configuration value by key"""
     cur = cursor()
-    cur.execute('SELECT val FROM config WHERE key = ?', key)
-    val = cur.fetchone()['val']
-    if val is None:
+    cur.execute('SELECT val FROM config WHERE key = ?', [key])
+    row = cur.fetchone()
+    if row is None:
         return default
-    return val
+    return row[0]
 
 def set_config(key, val):
     """Set a configuration value by key"""
-    params = (key, val)
-    return cursor().execute('UPDATE config SET val = ? WHERE key = ?', params)
+    params = (key, str(val))
+    cur = cursor()
+    cur.execute('SELECT val FROM config WHERE key = ?', [key])
+    row = cur.fetchone()
+    print(params)
+    if row is None:
+        return cur.execute('INSERT INTO config (key, val) VALUES(?, ?)', params)
+    return cur.execute('UPDATE config SET val = ? WHERE key = ?', params)
 
 def cursor():
     """Get the database cursor instance"""

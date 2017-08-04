@@ -431,7 +431,9 @@ class PreferencesWindow(Gtk.Window):
         self.builder.connect_signals(self)
 
         # Initialize control states
-        # TODO: initialize states from config
+        conf_overlay = config.get_config('overlay-scrollbars', True)
+        overlay_switch = self.builder.get_object('overlay_switch')
+        overlay_switch.set_state(conf_overlay)
 
         # Final UI initialization
         header_bar = self.builder.get_object('header_bar')
@@ -452,7 +454,8 @@ class PreferencesWindow(Gtk.Window):
 
     def overlay_switch(self, widget, event, user_data=None):
         """Handle overlay scrollbar switch toggle"""
-        print(event)
+        print(config.set_config('overlay-scrollbars', int(event)))
+        print(config.get_config('overlay-scrollbars'))
 
 
 if __name__ == '__main__':
