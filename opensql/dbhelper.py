@@ -3,9 +3,8 @@ Helper module for working with PyMySQL data sets
 
 Handles converting PyMySQL objects to Gtk-compatible structures and types
 """
-import pymysql
 import datetime
-import time
+import pymysql
 
 import gi
 
@@ -84,3 +83,7 @@ def result_to_liststore(result, description, treeview=None, char_limit=60):
         result_list.append(rowfinal)
 
     return result_list
+
+def escape_identifier(identifier):
+    """Escape MySQL identifier"""
+    return "`%s`" % identifier.replace('`', '``')

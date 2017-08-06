@@ -257,8 +257,9 @@ class AppWindow(Gtk.ApplicationWindow):
 
         def content_query(table_name):
             """Run table content SELECT query"""
-            # TODO: Quote table name and allow variable row limit
-            query = "SELECT * FROM `" + table_name + "` LIMIT 300"
+            # TODO: Allow variable row limit
+            identifier = dbhelper.escape_identifier(table_name)
+            query = 'SELECT * FROM %s LIMIT 300' % identifier
             cursor = self.db_connection.cursor()
             try:
                 cursor.execute(query)
