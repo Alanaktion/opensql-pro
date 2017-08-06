@@ -76,7 +76,6 @@ class AppWindow(Gtk.ApplicationWindow):
         button.connect('clicked', self.btn_connect_saved, data[0])
         box_connect.pack_end(button, True, True, 0)
         if show:
-            # TODO: Move separator and add button back to bottom
             box_connect.show_all()
 
     def btn_connect_saved(self, button, data):
@@ -208,7 +207,18 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def show_message(self, message):
         """Show message result from query"""
-        print(message)
+        results_scroll = self.builder.get_object('results_scroll')
+        if results_scroll.get_child():
+            results_scroll.remove(results_scroll.get_child())
+        align = Gtk.Alignment()
+        print(type(message))
+        if isinstance(message, Exception):
+            message = str(message)
+            # message = 'Error %d: %s' % message
+        label = Gtk.Label(label=message, selectable=True)
+        align.add(label)
+        results_scroll.add(align)
+        results_scroll.show_all()
 
     def btn_run(self, button):
         """Run query on button click"""
@@ -282,7 +292,7 @@ class AppWindow(Gtk.ApplicationWindow):
             try:
                 cursor.execute(query)
             except pymysql.err.Error as err:
-                print(err.__str__())
+                GLib.idle_add(window.show_message, err)
                 return
             else:
                 result = cursor.fetchall()
