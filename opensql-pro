@@ -211,7 +211,6 @@ class AppWindow(Gtk.ApplicationWindow):
         if results_scroll.get_child():
             results_scroll.remove(results_scroll.get_child())
         align = Gtk.Alignment()
-        print(type(message))
         if isinstance(message, Exception):
             message = str(message)
         label = Gtk.Label(label=message, selectable=True, justify='center',
@@ -292,7 +291,13 @@ class AppWindow(Gtk.ApplicationWindow):
             try:
                 cursor.execute(query)
             except pymysql.err.Error as err:
-                print(err.__str__())
+                dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
+                                           Gtk.ButtonsType.OK,
+                                           'Error loading table contents')
+                dialog.format_secondary_text(err.__str__())
+                dialog.set_title('Connection Error')
+                dialog.run()
+                dialog.destroy()
                 return
             else:
                 result = cursor.fetchall()
