@@ -30,7 +30,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.db_bookmark_id = None
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file('ui/app-window.glade')
+        self.builder.add_from_file('ui/app-window.ui')
         self.builder.connect_signals(self)
 
         header_bar = self.builder.get_object('header_bar')
@@ -362,7 +362,7 @@ class Application(Gtk.Application):
         self.add_action(action)
 
         builder = Gtk.Builder()
-        builder.add_from_file('ui/app-menu.glade')
+        builder.add_from_file('ui/app-menu.ui')
         self.set_app_menu(builder.get_object('app-menu'))
 
     def do_activate(self):
@@ -409,7 +409,7 @@ class AddConnectionWindow(Gtk.Window):
         super().__init__(*args, **kwargs)
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file('ui/add-dialog.glade')
+        self.builder.add_from_file('ui/add-dialog.ui')
         self.builder.connect_signals(self)
 
         header_bar = self.builder.get_object('header_bar')
@@ -461,7 +461,7 @@ class PreferencesWindow(Gtk.Window):
         super().__init__(*args, **kwargs)
 
         self.builder = Gtk.Builder()
-        self.builder.add_from_file('ui/preferences-dialog.glade')
+        self.builder.add_from_file('ui/preferences-dialog.ui')
         self.builder.connect_signals(self)
 
         # Initialize control states
