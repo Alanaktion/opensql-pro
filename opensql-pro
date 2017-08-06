@@ -214,8 +214,8 @@ class AppWindow(Gtk.ApplicationWindow):
         print(type(message))
         if isinstance(message, Exception):
             message = str(message)
-            # message = 'Error %d: %s' % message
-        label = Gtk.Label(label=message, selectable=True)
+        label = Gtk.Label(label=message, selectable=True, justify='center',
+                          wrap=True)
         align.add(label)
         results_scroll.add(align)
         results_scroll.show_all()
@@ -292,7 +292,7 @@ class AppWindow(Gtk.ApplicationWindow):
             try:
                 cursor.execute(query)
             except pymysql.err.Error as err:
-                GLib.idle_add(window.show_message, err)
+                print(err.__str__())
                 return
             else:
                 result = cursor.fetchall()
