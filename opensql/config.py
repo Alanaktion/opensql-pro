@@ -13,11 +13,17 @@ CONFIG_DB.row_factory = sqlite3.Row
 
 def init():
     """Initialize configuration database"""
-    cursor().execute('''CREATE TABLE IF NOT EXISTS connections
-                        (id integer primary key,
-                        name, host, port, user, pass)''')
-    cursor().execute('''CREATE TABLE IF NOT EXISTS config
-                        (id integer primary key, key, val)''')
+    cur = cursor()
+    cur.execute('''CREATE TABLE IF NOT EXISTS connections
+                   (id integer primary key, name, host, port, user, pass,
+                   lastdb INTEGER)''')
+    cur.execute('''CREATE TABLE IF NOT EXISTS config
+                   (id integer primary key, key, val)''')
+
+    cur.execute("PRAGMA table_info('connections')")
+    conn_info = cur.fetchall()
+    if len(conn_info) < 6:
+        cur.execute('ALTER TABLE connections ADD COLUMN lastdb TEXT')
 
 def get_connections():
     """Get a list of all saved connections"""
@@ -39,6 +45,13 @@ def get_connection(key):
 def rm_connection(key):
     """Remove a connection by id"""
     cursor().execute('DELETE FROM connections WHERE id = ?', str(key))
+
+def set_connection_lastdb(key, dbname):
+    """Set last used database for a connection"""
+    params = (dbname, key)
+    cur = cursor()
+    cur.execute('UPDATE connections SET lastdb = ? WHERE id = ?', params)
+    return cur.lastrowid
 
 def get_config(key, default=None):
     """Get a configuration value by key"""
