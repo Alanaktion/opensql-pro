@@ -26,6 +26,7 @@ class AppWindow(Gtk.ApplicationWindow):
         super().__init__(*args, **kwargs)
 
         self.set_default_size(800, 600)
+        self.connection_active = False
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file('ui/app-window.glade')
@@ -133,6 +134,8 @@ class AppWindow(Gtk.ApplicationWindow):
         edit_pane = self.builder.get_object('edit_pane')
         self.add(edit_pane)
         edit_pane.show_all()
+
+        self.connection_active = True
 
         # Bind run button
         btn_run = self.builder.get_object('btn_run')
@@ -454,8 +457,13 @@ class PreferencesWindow(Gtk.Window):
 
     def overlay_switch(self, widget, event, user_data=None):
         """Handle overlay scrollbar switch toggle"""
-        print(config.set_config('overlay-scrollbars', int(event)))
-        print(config.get_config('overlay-scrollbars'))
+        config.set_config('overlay-scrollbars', int(event))
+        if app.window.connection_active:
+            builder = app.window.builder
+            builder.get_object('table_scroll').set_overlay_scrolling(event)
+            builder.get_object('editor_scroll').set_overlay_scrolling(event)
+            builder.get_object('results_scroll').set_overlay_scrolling(event)
+            builder.get_object('content_scroll').set_overlay_scrolling(event)
 
 
 if __name__ == '__main__':

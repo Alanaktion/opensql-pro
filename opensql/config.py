@@ -51,14 +51,15 @@ def get_config(key, default=None):
 
 def set_config(key, val):
     """Set a configuration value by key"""
-    params = (key, str(val))
+    params = (str(val), key)
     cur = cursor()
     cur.execute('SELECT val FROM config WHERE key = ?', [key])
     row = cur.fetchone()
-    print(params)
     if row is None:
-        return cur.execute('INSERT INTO config (key, val) VALUES(?, ?)', params)
-    return cur.execute('UPDATE config SET val = ? WHERE key = ?', params)
+        cur.execute('INSERT INTO config (val, key) VALUES(?, ?)', params)
+    else:
+        cur.execute('UPDATE config SET val = ? WHERE key = ?', params)
+    return cur.lastrowid
 
 def cursor():
     """Get the database cursor instance"""
