@@ -22,7 +22,7 @@ def init():
 
     cur.execute("PRAGMA table_info('connections')")
     conn_info = cur.fetchall()
-    if len(conn_info) < 6:
+    if len(conn_info) < 7:
         cur.execute('ALTER TABLE connections ADD COLUMN lastdb TEXT')
 
 def get_connections():
