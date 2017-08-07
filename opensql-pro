@@ -145,7 +145,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         edit_pane = self.builder.get_object('edit_pane')
 
-        c_over = bool(int(config.get_config('overlay-scrollbars', True)))
+        c_over = bool(int(config.get_config('overlay-scrollbars', False)))
         self.builder.get_object('table_scroll').set_overlay_scrolling(c_over)
         self.builder.get_object('editor_scroll').set_overlay_scrolling(c_over)
         self.builder.get_object('results_scroll').set_overlay_scrolling(c_over)
@@ -472,7 +472,7 @@ class PreferencesWindow(Gtk.Window):
         self.builder.connect_signals(self)
 
         # Initialize control states
-        conf_overlay = config.get_config('overlay-scrollbars', True)
+        conf_overlay = config.get_config('overlay-scrollbars', False)
         overlay_switch = self.builder.get_object('overlay_switch')
         overlay_switch.set_state(bool(int(conf_overlay)))
 
