@@ -14,7 +14,7 @@ from opensql import config, dbhelper
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
-from gi.repository import Gio, Gtk, GLib, Gdk, GtkSource, Pango
+from gi.repository import Gio, Gtk, GLib, Gdk, GtkSource, GObject, Pango
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 18:
     sys.exit('Gtk 3.18 or higher is required')
@@ -30,6 +30,7 @@ class AppWindow(Gtk.ApplicationWindow):
         self.db_bookmark_id = None
 
         self.builder = Gtk.Builder()
+        GObject.type_register(GtkSource.View)
         self.builder.add_from_file('ui/app-window.ui')
         self.builder.connect_signals(self)
 
@@ -127,15 +128,20 @@ class AppWindow(Gtk.ApplicationWindow):
             combo_db.set_active(lastdb_index)
 
         # Add editor UI
-        self.editor = GtkSource.View(wrap_mode='word-char', monospace=True,
-                                     show_line_numbers=True)
-        editor_scroll = self.builder.get_object('editor_scroll')
-        editor_scroll.add(self.editor)
+        self.editor = self.builder.get_object('editor_source')
+        buffer = self.editor.get_buffer()
 
         lang_manager = GtkSource.LanguageManager()
         lang = lang_manager.guess_language(None, 'application/sql')
-        buffer = self.editor.get_buffer()
         buffer.set_language(lang)
+
+        # conf_style = config.get_config('source-style')
+        # if conf_style:
+        #     print(conf_style)
+        #     scheme = GtkSource.StyleScheme(id=conf_style)
+        #     print(scheme.get_id())
+        #     print(scheme.get_name())
+        #     buffer.set_style_scheme(scheme)
 
         edit_pane = self.builder.get_object('edit_pane')
 
@@ -458,8 +464,9 @@ class PreferencesWindow(Gtk.Window):
     """Preferences modal window"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(default_width=440, *args, **kwargs)
 
+        GObject.type_register(GtkSource.StyleSchemeChooserWidget)
         self.builder = Gtk.Builder()
         self.builder.add_from_file('ui/preferences-dialog.ui')
         self.builder.connect_signals(self)
@@ -469,12 +476,18 @@ class PreferencesWindow(Gtk.Window):
         overlay_switch = self.builder.get_object('overlay_switch')
         overlay_switch.set_state(bool(int(conf_overlay)))
 
+        # conf_style = config.get_config('source-style')
+        # if conf_style:
+        #     style_chooser = self.builder.get_object('style_chooser')
+        #     scheme = GtkSource.StyleScheme(id=conf_style)
+        #     style_chooser.set_style_scheme(scheme)
+
         # Final UI initialization
         header_bar = self.builder.get_object('header_bar')
         self.set_titlebar(header_bar)
 
-        input_grid = self.builder.get_object('input_grid')
-        self.add(input_grid)
+        notebook = self.builder.get_object('notebook')
+        self.add(notebook)
 
         self.connect('key_press_event', self.on_key_press)
 
@@ -495,6 +508,14 @@ class PreferencesWindow(Gtk.Window):
             builder.get_object('editor_scroll').set_overlay_scrolling(event)
             builder.get_object('results_scroll').set_overlay_scrolling(event)
             builder.get_object('content_scroll').set_overlay_scrolling(event)
+
+    # def style_chooser(self, widget, event, user_data=None):
+    #     """Handle style chooser scheme selection"""
+    #     style_name = widget.get_style_scheme().get_id()
+    #     config.set_config('source-style', style_name)
+    #     if app.window.connection_active:
+    #         scheme = GtkSource.StyleScheme(id=style_name)
+    #         app.window.editor.get_buffer().set_style_scheme(scheme)
 
 
 if __name__ == '__main__':
