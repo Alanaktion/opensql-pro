@@ -363,6 +363,10 @@ class Application(Gtk.Application):
         action.connect('activate', self.on_preferences)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new('shortcuts', None)
+        action.connect('activate', self.on_shortcuts)
+        self.add_action(action)
+
         action = Gio.SimpleAction.new('quit', None)
         action.connect('activate', self.on_quit)
         self.add_action(action)
@@ -402,6 +406,25 @@ class Application(Gtk.Application):
         dialog = PreferencesWindow(transient_for=self.window, modal=True,
                                    skip_taskbar_hint=True)
         dialog.present()
+
+    def on_shortcuts(self, action, param):
+        """Show Shortcuts dialog"""
+        builder = Gtk.Builder()
+        builder.add_from_file('ui/shortcuts-window.ui')
+        win = builder.get_object('shortcuts')
+
+        win.set_transient_for(self.window)
+
+        def on_key_press(widget, event, user_data=None):
+            """Handle key press"""
+            key = Gdk.keyval_name(event.keyval)
+            if key == 'Escape':
+                widget.close()
+                return True
+            return False
+
+        win.connect('key_press_event', on_key_press)
+        win.present()
 
     def on_quit(self, action, param):
         """Close main window, gracefully exiting"""
