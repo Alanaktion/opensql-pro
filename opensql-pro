@@ -135,13 +135,11 @@ class AppWindow(Gtk.ApplicationWindow):
         lang = lang_manager.guess_language(None, 'application/sql')
         buffer.set_language(lang)
 
-        # conf_style = config.get_config('source-style')
-        # if conf_style:
-        #     print(conf_style)
-        #     scheme = GtkSource.StyleScheme(id=conf_style)
-        #     print(scheme.get_id())
-        #     print(scheme.get_name())
-        #     buffer.set_style_scheme(scheme)
+        conf_style = config.get_config('source-style')
+        if conf_style:
+            scheme_manager = GtkSource.StyleSchemeManager()
+            scheme = scheme_manager.get_scheme(conf_style)
+            buffer.set_style_scheme(scheme)
 
         edit_pane = self.builder.get_object('edit_pane')
 
@@ -499,11 +497,12 @@ class PreferencesWindow(Gtk.Window):
         overlay_switch = self.builder.get_object('overlay_switch')
         overlay_switch.set_state(bool(int(conf_overlay)))
 
-        # conf_style = config.get_config('source-style')
-        # if conf_style:
-        #     style_chooser = self.builder.get_object('style_chooser')
-        #     scheme = GtkSource.StyleScheme(id=conf_style)
-        #     style_chooser.set_style_scheme(scheme)
+        conf_style = config.get_config('source-style')
+        if conf_style:
+            style_chooser = self.builder.get_object('style_chooser')
+            scheme_manager = GtkSource.StyleSchemeManager()
+            scheme = scheme_manager.get_scheme(conf_style)
+            style_chooser.set_style_scheme(scheme)
 
         # Final UI initialization
         header_bar = self.builder.get_object('header_bar')
@@ -532,13 +531,14 @@ class PreferencesWindow(Gtk.Window):
             builder.get_object('results_scroll').set_overlay_scrolling(event)
             builder.get_object('content_scroll').set_overlay_scrolling(event)
 
-    # def style_chooser(self, widget, event, user_data=None):
-    #     """Handle style chooser scheme selection"""
-    #     style_name = widget.get_style_scheme().get_id()
-    #     config.set_config('source-style', style_name)
-    #     if app.window.connection_active:
-    #         scheme = GtkSource.StyleScheme(id=style_name)
-    #         app.window.editor.get_buffer().set_style_scheme(scheme)
+    def style_chooser(self, widget, event, user_data=None):
+        """Handle style chooser scheme selection"""
+        style_name = widget.get_style_scheme().get_id()
+        config.set_config('source-style', style_name)
+        if app.window.connection_active:
+            scheme_manager = GtkSource.StyleSchemeManager()
+            scheme = scheme_manager.get_scheme(style_name)
+            app.window.editor.get_buffer().set_style_scheme(scheme)
 
 
 if __name__ == '__main__':
