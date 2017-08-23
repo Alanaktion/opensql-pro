@@ -15,7 +15,9 @@
         <col id="1" translatable="yes">Testing again</col>
       </row>
       <row>
-        <col id="0" translatable="yes">This is also a test</col>
+        <col id="0" translatable="yes">This is also a test
+It spans multiple lines!
+Hooray.</col>
         <col id="1" translatable="yes">Hello</col>
       </row>
       <row>
@@ -36,7 +38,9 @@
         <property name="fixed_height_mode">True</property>
         <property name="enable_grid_lines">both</property>
         <child internal-child="selection">
-          <object class="GtkTreeSelection"/>
+          <object class="GtkTreeSelection">
+            <property name="mode">browse</property>
+          </object>
         </child>
         <child>
           <object class="GtkTreeViewColumn">
@@ -46,6 +50,8 @@
             <child>
               <object class="GtkCellRendererText">
                 <property name="editable">True</property>
+                <property name="ellipsize">end</property>
+                <property name="single_paragraph_mode">True</property>
               </object>
               <attributes>
                 <attribute name="text">0</attribute>
@@ -55,11 +61,14 @@
         </child>
         <child>
           <object class="GtkTreeViewColumn">
+            <property name="resizable">True</property>
             <property name="sizing">fixed</property>
             <property name="title">String 2</property>
             <child>
               <object class="GtkCellRendererText">
                 <property name="editable">True</property>
+                <property name="ellipsize">end</property>
+                <property name="single_paragraph_mode">True</property>
               </object>
               <attributes>
                 <attribute name="text">1</attribute>

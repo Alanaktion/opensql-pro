@@ -55,15 +55,16 @@ def value_to_renderable(val):
         return '<BINARY>'
     return val
 
-def result_to_liststore(result, description, treeview=None, char_limit=60):
+def result_to_liststore(result, description, treeview=None, editable=False):
     """Convert PyMySQL result to GtkListStore"""
     cols = []
     for i, col in enumerate(description):
         cols = cols + [int_to_type(col[1])]
         if treeview:
-            control = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(col[0].replace('_', '__'), control,
-                                        text=i)
+            control = Gtk.CellRendererText(editable=editable, ellipsize='end',
+                                           single_paragraph_mode=True)
+            label = col[0].replace('_', '__')
+            column = Gtk.TreeViewColumn(label, control, text=i)
             column.set_resizable(True)
             treeview.append_column(column)
 
@@ -72,14 +73,7 @@ def result_to_liststore(result, description, treeview=None, char_limit=60):
         rowfinal = []
         for val in row.values():
             displayval = value_to_renderable(val)
-            if isinstance(displayval, str):
-                oneline = displayval.replace('\r', '').replace('\n', '¶')
-                if len(oneline) > char_limit - 1:
-                    rowfinal.append(oneline[:char_limit - 1] + '…')
-                else:
-                    rowfinal.append(oneline)
-            else:
-                rowfinal.append(displayval)
+            rowfinal.append(displayval)
         result_list.append(rowfinal)
 
     return result_list

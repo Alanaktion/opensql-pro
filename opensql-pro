@@ -204,6 +204,8 @@ class AppWindow(Gtk.ApplicationWindow):
         fontdesc = Pango.FontDescription("monospace 9")
         results_tree.modify_font(fontdesc)
 
+        results_tree.get_selection().set_mode(Gtk.SelectionMode.BROWSE)
+
         result_list = dbhelper.result_to_liststore(result, meta, results_tree)
         results_tree.set_model(result_list)
         results_scroll.add(results_tree)
@@ -314,8 +316,11 @@ class AppWindow(Gtk.ApplicationWindow):
             fontdesc = Pango.FontDescription("monospace 9")
             content_tree.modify_font(fontdesc)
 
+            content_tree.get_selection().set_mode(Gtk.SelectionMode.BROWSE)
+
             content_list = dbhelper.result_to_liststore(result, meta,
-                                                        content_tree)
+                                                        content_tree,
+                                                        editable=True)
             content_tree.set_model(content_list)
 
             if content_scroll.get_child():
