@@ -63,7 +63,7 @@ class AppWindow(Gtk.ApplicationWindow):
         """Handle key press"""
         key = Gdk.keyval_name(event.keyval)
         if key == 'F5':
-            self.run_editor_query()
+            self.update_table_list()
             return True
         if key == 'F9':
             self.run_editor_query()
@@ -236,6 +236,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def update_table_list(self):
         """Update the table/view list in the left pane"""
+        if not self.db_connection:
+            return
 
         table_scroll = self.builder.get_object('table_scroll')
         uihelper.add_spinner(table_scroll)

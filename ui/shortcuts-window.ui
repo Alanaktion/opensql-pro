@@ -18,6 +18,8 @@
                 <property name="accelerator">&lt;Primary&gt;comma</property>
                 <property name="title" translatable="yes">Preferences</property>
               </object>
+            </child>
+            <child>
               <object class="GtkShortcutsShortcut">
                 <property name="visible">1</property>
                 <property name="accelerator">&lt;Primary&gt;Q</property>
@@ -30,6 +32,13 @@
           <object class="GtkShortcutsGroup">
             <property name="visible">1</property>
             <property name="title" translatable="yes">Editor</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="visible">1</property>
+                <property name="accelerator">F5</property>
+                <property name="title" translatable="yes">Refresh table list</property>
+              </object>
+            </child>
             <child>
               <object class="GtkShortcutsShortcut">
                 <property name="visible">1</property>
