@@ -9,7 +9,6 @@ import pymysql
 import gi
 
 gi.require_version('Gtk', '3.0')
-gi.require_version('GtkSource', '3.0')
 from gi.repository import Gtk
 
 def int_to_type(type_id):

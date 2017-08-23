@@ -10,7 +10,7 @@ import gi
 import pymysql.cursors
 import pymysql
 
-from opensql import config, dbhelper
+from opensql import config, dbhelper, uihelper
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkSource', '3.0')
@@ -167,17 +167,8 @@ class AppWindow(Gtk.ApplicationWindow):
             sel_range = (buffer.get_start_iter(), buffer.get_end_iter())
         query = buffer.get_text(*sel_range, False)
 
-        # Show spinner in result container
         results_scroll = self.builder.get_object('results_scroll')
-        if results_scroll.get_child():
-            results_scroll.remove(results_scroll.get_child())
-
-        c_align = Gtk.Alignment(halign='center', valign='center')
-        c_spin = Gtk.Spinner()
-        c_spin.start()
-        c_align.add(c_spin)
-        results_scroll.add(c_align)
-        results_scroll.show_all()
+        uihelper.add_spinner(results_scroll)
 
         def run_query(query, window):
             """Execute query and call show_result"""
@@ -241,31 +232,57 @@ class AppWindow(Gtk.ApplicationWindow):
         self.db_connection.select_db(db_name)
         config.set_connection_lastdb(self.db_bookmark_id, db_name)
 
-        # Update table list
-        cursor = self.db_connection.cursor()
-        cursor.execute('SHOW TABLES')
-        tables = cursor.fetchall()
+        self.update_table_list()
+
+    def update_table_list(self):
+        """Update the table/view list in the left pane"""
 
         table_scroll = self.builder.get_object('table_scroll')
-        if table_scroll.get_child():
-            table_scroll.remove(table_scroll.get_child())
+        uihelper.add_spinner(table_scroll)
 
-        table_tree = Gtk.TreeView(enable_search=True)
-        fontdesc = Pango.FontDescription("monospace 9")
-        table_tree.modify_font(fontdesc)
+        def list_query():
+            """Load table list"""
+            cursor = self.db_connection.cursor()
+            try:
+                cursor.execute('SHOW TABLES')
+            except pymysql.err.Error as err:
+                dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
+                                           Gtk.ButtonsType.OK,
+                                           'Error loading table list')
+                dialog.format_secondary_text(err.__str__())
+                dialog.set_title('Connection Error')
+                dialog.run()
+                dialog.destroy()
+                return
+            else:
+                tables = cursor.fetchall()
+                GLib.idle_add(list_display, tables, cursor.description)
 
-        control = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn('Tables', control, text=0)
-        table_tree.append_column(column)
-        table_list = Gtk.ListStore(str)
-        for row in tables:
-            table_list.append(row.values())
+        def list_display(tables, meta):
+            """Render table list"""
+            table_tree = Gtk.TreeView(enable_search=True)
+            fontdesc = Pango.FontDescription("monospace 9")
+            table_tree.modify_font(fontdesc)
 
-        table_tree.set_model(table_list)
-        table_tree.set_search_column(0)
-        table_tree.get_selection().connect('changed', self.on_table_select)
-        table_scroll.add(table_tree)
-        table_scroll.show_all()
+            control = Gtk.CellRendererText()
+            column = Gtk.TreeViewColumn('Tables', control, text=0)
+            table_tree.append_column(column)
+            table_list = Gtk.ListStore(str)
+            for row in tables:
+                table_list.append(row.values())
+
+            table_tree.set_model(table_list)
+            table_tree.set_search_column(0)
+            table_tree.get_selection().connect('changed', self.on_table_select)
+
+            if table_scroll.get_child():
+                table_scroll.remove(table_scroll.get_child())
+            table_scroll.add(table_tree)
+            table_scroll.show_all()
+
+        thread = threading.Thread(target=list_query)
+        thread.daemon = True
+        thread.start()
 
     def on_table_select(self, selection):
         """Handle table selection"""
@@ -277,16 +294,7 @@ class AppWindow(Gtk.ApplicationWindow):
         """Load and display table contents"""
 
         content_scroll = self.builder.get_object('content_scroll')
-        if content_scroll.get_child():
-            content_scroll.remove(content_scroll.get_child())
-
-        # Show spinner
-        c_align = Gtk.Alignment(halign='center', valign='center')
-        c_spin = Gtk.Spinner()
-        c_spin.start()
-        c_align.add(c_spin)
-        content_scroll.add(c_align)
-        content_scroll.show_all()
+        uihelper.add_spinner(content_scroll)
 
         def content_query(table_name):
             """Run table content SELECT query"""
