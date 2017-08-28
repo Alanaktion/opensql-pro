@@ -342,6 +342,16 @@ class AppWindow(Gtk.ApplicationWindow):
         thread.daemon = True
         thread.start()
 
+    def load_table_structure(self, table_name):
+        """Show table structure info"""
+
+        # Show basic structure
+        structure_scroll = self.builder.get_object('structure_scroll')
+        label = Gtk.Label(label='test', selectable=True, wrap=True)
+
+        #
+        index_scroll = self.builder.get_object('structure_index_scroll')
+
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
         add_dialog = AddConnectionWindow(transient_for=self, modal=True,
@@ -500,11 +510,11 @@ class PreferencesWindow(Gtk.Window):
     """Preferences modal window"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(default_width=440, *args, **kwargs)
+        super().__init__(default_width=360, default_height=420, *args, **kwargs)
 
         GObject.type_register(GtkSource.StyleSchemeChooserWidget)
         self.builder = Gtk.Builder()
-        self.builder.add_from_file('ui/preferences-dialog.ui')
+        self.builder.add_from_file('ui/preferences-window.ui')
         self.builder.connect_signals(self)
 
         # Initialize control states
@@ -523,8 +533,8 @@ class PreferencesWindow(Gtk.Window):
         header_bar = self.builder.get_object('header_bar')
         self.set_titlebar(header_bar)
 
-        notebook = self.builder.get_object('notebook')
-        self.add(notebook)
+        stack = self.builder.get_object('stack')
+        self.add(stack)
 
         self.connect('key_press_event', self.on_key_press)
 
