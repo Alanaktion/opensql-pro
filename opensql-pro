@@ -25,7 +25,19 @@ class AppWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.set_default_size(800, 600)
+        # Restore window state
+        width = config.get_config('window_width', 800)
+        height = config.get_config('window_height', 600)
+        self.set_default_size(int(width), int(height))
+        if config.get_config('window_state') == Gdk.WindowState.MAXIMIZED:
+            self.state = Gdk.WindowState.MAXIMIZED
+            self.maximize()
+        elif config.get_config('window_state') == Gdk.WindowState.FULLSCREEN:
+            self.state = Gdk.WindowState.FULLSCREEN
+            self.fullscreen()
+        else:
+            self.state = None
+
         self.connection_active = False
         self.db_bookmark_id = None
 
@@ -58,6 +70,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.connect('key_press_event', self.on_key_press)
         self.connect('delete-event', self.on_destroy)
+        self.connect('size-allocate', self.on_size_allocate)
+        self.connect('window-state-event', self.on_window_state_event)
 
     def on_key_press(self, widget, event, user_data=None):
         """Handle key press"""
@@ -358,9 +372,44 @@ class AppWindow(Gtk.ApplicationWindow):
                                          skip_taskbar_hint=True)
         add_dialog.present()
 
+    def on_size_allocate(self, widget=None, *data):
+        """Save window size to config"""
+        if self.state is None:
+            size = self.get_size()
+            config.set_config('window_width', size.width)
+            config.set_config('window_height', size.height)
+
+    def on_window_state_event(self, widget, event):
+        """Save window state to config"""
+        if event.changed_mask & Gdk.WindowState.MAXIMIZED:
+            maximized = event.new_window_state & Gdk.WindowState.MAXIMIZED
+            if maximized:
+                self.state = Gdk.WindowState.MAXIMIZED
+                config.set_config('window_state', 'maximized')
+            else:
+                fullscreen = event.new_window_state & Gdk.WindowState.FULLSCREEN
+                if fullscreen:
+                    self.state = Gdk.WindowState.FULLSCREEN
+                    config.set_config('window_state', 'fullscreen')
+                else:
+                    self.state = None
+                    config.set_config('window_state', 'normal')
+        if event.changed_mask & Gdk.WindowState.FULLSCREEN:
+            fullscreen = event.new_window_state & Gdk.WindowState.FULLSCREEN
+            if fullscreen:
+                self.state = Gdk.WindowState.FULLSCREEN
+                config.set_config('window_state', 'fullscreen')
+            else:
+                maximized = event.new_window_state & Gdk.WindowState.MAXIMIZED
+                if maximized:
+                    self.state = Gdk.WindowState.MAXIMIZED
+                    config.set_config('window_state', 'maximized')
+                else:
+                    self.state = None
+                    config.set_config('window_state', 'normal')
+
     def on_destroy(self, widget=None, *data):
         """Write config DB and close MySQL connections on quit"""
-        # TODO: save window state
         config.commit()
         if self.db_connection:
             self.db_connection.close()
