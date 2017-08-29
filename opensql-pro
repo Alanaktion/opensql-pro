@@ -38,8 +38,8 @@ class AppWindow(Gtk.ApplicationWindow):
         else:
             self.state = None
 
-        self.connection_active = False
-        self.db_bookmark_id = None
+        # self.connection_active = False
+        # self.db_bookmark_id = None
 
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
@@ -49,24 +49,15 @@ class AppWindow(Gtk.ApplicationWindow):
         header_bar = self.builder.get_object('header_bar')
         self.set_titlebar(header_bar)
 
-        # Display connection list
-        box_conns = self.builder.get_object('box_connection_container')
-        box_connect = self.builder.get_object('box_connection_list')
-        connections = config.get_connections()
-
-        for row in connections:
-            self.add_connection_btn(row)
-
-        self.conn_add_button = self.builder.get_object('btn_add_connection')
-        box_connect.pack_end(self.conn_add_button, True, True, 0)
-
-        self.add(box_conns)
+        self.notebook = self.builder.get_object('notebook')
+        self.add_page()
+        self.add(self.notebook)
 
         self.set_icon_name('office-database')
         self.show_all()
 
-        self.editor = None
-        self.db_connection = None
+        # self.editor = None
+        # self.db_connection = None
 
         self.connect('key_press_event', self.on_key_press)
         self.connect('delete-event', self.on_destroy)
@@ -84,14 +75,43 @@ class AppWindow(Gtk.ApplicationWindow):
             return True
         return False
 
-    def add_connection_btn(self, data, show=False):
+    def add_page(self):
+        """Add a new connection page"""
+        builder = Gtk.Builder()
+        builder.add_from_file('ui/app-tab.ui')
+        builder.connect_signals(self)
+
+        box = builder.get_object('tab_box')
+
+        start_builder = Gtk.Builder()
+        start_builder.add_from_file('ui/app-tab-start.ui')
+        start_builder.connect_signals(self)
+
+        box.add(start_builder.get_object('container'))
+
+        connection_list = start_builder.get_object('connection_list')
+        connections = config.get_connections()
+
+        for row in connections:
+            self.add_connection_btn(row, connection_list)
+
+        conn_add_button = start_builder.get_object('btn_add_connection')
+        connection_list.pack_end(conn_add_button, True, True, 0)
+
+        tab = builder.get_object('tab')
+        self.notebook.append_page(box, tab)
+
+    def on_add_tab_click(self, widget=None, *data):
+        """Add a new connection tab on click"""
+        self.add_page()
+
+    def add_connection_btn(self, data, connection_list, show=False):
         """Add button for saved connection"""
-        box_connect = self.builder.get_object('box_connection_list')
         button = Gtk.Button(label=data[1])
         button.connect('clicked', self.btn_connect_saved, data[0])
-        box_connect.pack_end(button, True, True, 0)
+        connection_list.pack_end(button, True, True, 0)
         if show:
-            box_connect.show_all()
+            connection_list.show_all()
 
     def btn_connect_saved(self, button, data):
         """Connect to saved server on button click"""
@@ -120,7 +140,8 @@ class AppWindow(Gtk.ApplicationWindow):
         header_bar.set_subtitle(conndata[4] + '@' + conndata[2])
 
         # Remove connection UI
-        self.builder.get_object('box_connection_container').destroy()
+        page = self.notebook.get_current_page()
+        self.notebook.get_nth_page(page).get_child().destroy()
 
         # Update database list
         combo_db = self.builder.get_object('combo_db')
@@ -542,7 +563,8 @@ class AddConnectionWindow(Gtk.Window):
         cid = config.add_connection(name, host, port, user, password)
 
         data = config.get_connection(cid)
-        app.window.add_connection_btn(data, True)
+        # TODO: use box_connect from current tab
+        # app.window.add_connection_btn(data, True)
 
         self.close()
 
