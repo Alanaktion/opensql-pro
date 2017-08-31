@@ -93,6 +93,7 @@ class AppWindow(Gtk.ApplicationWindow):
         connection_list.pack_end(conn_add_button, True, True, 0)
 
         tab = builder.get_object('tab')
+        tab.builder = builder
         self.notebook.append_page(box, tab)
 
     def get_current_page(self):
@@ -127,6 +128,10 @@ class AppWindow(Gtk.ApplicationWindow):
                                    charset='utf8mb4',
                                    cursorclass=pymysql.cursors.DictCursor)
             page.db_connection = conn
+
+            # Initialize editor builder
+            page.builder = Gtk.Builder()
+            page.builder.add_from_file('ui/app-tab-editor.ui')
         except pymysql.err.Error as err:
             dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
                                        Gtk.ButtonsType.OK,
@@ -137,8 +142,10 @@ class AppWindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
 
-
-        # Set subtitle
+        # Set tab title and window subtitle
+        tab = self.notebook.get_tab_label(page)
+        tab_label = tab.builder.get_object('tab_label')
+        tab_label.set_label(conndata[1])
         header_bar = self.builder.get_object('header_bar')
         header_bar.set_subtitle(conndata[4] + '@' + conndata[2])
 
@@ -166,13 +173,8 @@ class AppWindow(Gtk.ApplicationWindow):
             combo_db.set_active(lastdb_index)
 
         # Add editor UI
-        page.builder = Gtk.Builder()
-        page.builder.add_from_file('ui/app-tab-editor.ui')
         page.editor = page.builder.get_object('editor_source')
         buffer = page.editor.get_buffer()
-
-        print(page)
-        print(page.builder)
 
         lang_manager = GtkSource.LanguageManager()
         lang = lang_manager.guess_language(None, 'application/sql')
@@ -243,8 +245,7 @@ class AppWindow(Gtk.ApplicationWindow):
         if results_scroll.get_child():
             results_scroll.remove(results_scroll.get_child())
 
-        results_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False,
-                                    fixed_height_mode=True)
+        results_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
         fontdesc = Pango.FontDescription("monospace 9")
         results_tree.modify_font(fontdesc)
 
@@ -324,8 +325,7 @@ class AppWindow(Gtk.ApplicationWindow):
 
         def list_display(tables, meta):
             """Render table list"""
-            table_tree = Gtk.TreeView(enable_search=True,
-                                      fixed_height_mode=True)
+            table_tree = Gtk.TreeView(enable_search=True)
             fontdesc = Pango.FontDescription("monospace 9")
             table_tree.modify_font(fontdesc)
 
@@ -385,8 +385,7 @@ class AppWindow(Gtk.ApplicationWindow):
         def content_display(result, meta):
             """Render query result"""
             content_tree = Gtk.TreeView(enable_grid_lines=True,
-                                        enable_search=False,
-                                        fixed_height_mode=True)
+                                        enable_search=False)
             fontdesc = Pango.FontDescription("monospace 9")
             content_tree.modify_font(fontdesc)
 
