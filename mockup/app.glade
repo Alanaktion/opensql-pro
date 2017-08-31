@@ -253,6 +253,7 @@
               <object class="GtkTreeView">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="fixed_height_mode">True</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection"/>
                 </child>

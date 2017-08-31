@@ -38,9 +38,6 @@ class AppWindow(Gtk.ApplicationWindow):
         else:
             self.state = None
 
-        # self.connection_active = False
-        # self.db_bookmark_id = None
-
         self.builder = Gtk.Builder()
         GObject.type_register(GtkSource.View)
         self.builder.add_from_file('ui/app-window.ui')
@@ -55,9 +52,6 @@ class AppWindow(Gtk.ApplicationWindow):
 
         self.set_icon_name('office-database')
         self.show_all()
-
-        # self.editor = None
-        # self.db_connection = None
 
         self.connect('key_press_event', self.on_key_press)
         self.connect('delete-event', self.on_destroy)
@@ -101,6 +95,14 @@ class AppWindow(Gtk.ApplicationWindow):
         tab = builder.get_object('tab')
         self.notebook.append_page(box, tab)
 
+    def get_current_page(self):
+        """Get the current notebook page"""
+        page_id = self.notebook.get_current_page()
+        if page_id is not None:
+            page = self.notebook.get_nth_page(page_id)
+            return page
+        return None
+
     def on_add_tab_click(self, widget=None, *data):
         """Add a new connection tab on click"""
         self.add_page()
@@ -115,16 +117,16 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def btn_connect_saved(self, button, data):
         """Connect to saved server on button click"""
-
-        # Connect to server
+        page = self.get_current_page()
         try:
             conndata = config.get_connection(data)
-            self.db_bookmark_id = conndata[0]
-            self.db_connection = pymysql.connect(host=conndata[2],
-                                                 user=conndata[4],
-                                                 password=conndata[5],
-                                                 charset='utf8mb4',
-                                                 cursorclass=pymysql.cursors.DictCursor)
+            page.db_bookmark_id = conndata[0]
+            conn = pymysql.connect(host=conndata[2],
+                                   user=conndata[4],
+                                   password=conndata[5],
+                                   charset='utf8mb4',
+                                   cursorclass=pymysql.cursors.DictCursor)
+            page.db_connection = conn
         except pymysql.err.Error as err:
             dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.ERROR,
                                        Gtk.ButtonsType.OK,
@@ -135,17 +137,18 @@ class AppWindow(Gtk.ApplicationWindow):
             dialog.destroy()
             return
 
+
         # Set subtitle
         header_bar = self.builder.get_object('header_bar')
         header_bar.set_subtitle(conndata[4] + '@' + conndata[2])
 
         # Remove connection UI
-        page = self.notebook.get_current_page()
-        self.notebook.get_nth_page(page).get_child().destroy()
+        for child in page.get_children():
+            child.destroy()
 
         # Update database list
         combo_db = self.builder.get_object('combo_db')
-        cursor = self.db_connection.cursor()
+        cursor = page.db_connection.cursor()
         cursor.execute('SHOW DATABASES')
         db_result = cursor.fetchall()
         db_store = Gtk.ListStore(str)
@@ -163,8 +166,13 @@ class AppWindow(Gtk.ApplicationWindow):
             combo_db.set_active(lastdb_index)
 
         # Add editor UI
-        self.editor = self.builder.get_object('editor_source')
-        buffer = self.editor.get_buffer()
+        page.builder = Gtk.Builder()
+        page.builder.add_from_file('ui/app-tab-editor.ui')
+        page.editor = page.builder.get_object('editor_source')
+        buffer = page.editor.get_buffer()
+
+        print(page)
+        print(page.builder)
 
         lang_manager = GtkSource.LanguageManager()
         lang = lang_manager.guess_language(None, 'application/sql')
@@ -176,38 +184,46 @@ class AppWindow(Gtk.ApplicationWindow):
             scheme = scheme_manager.get_scheme(conf_style)
             buffer.set_style_scheme(scheme)
 
-        edit_pane = self.builder.get_object('edit_pane')
+        container = page.builder.get_object('container')
 
         c_over = bool(int(config.get_config('overlay-scrollbars', False)))
-        self.builder.get_object('table_scroll').set_overlay_scrolling(c_over)
-        self.builder.get_object('editor_scroll').set_overlay_scrolling(c_over)
-        self.builder.get_object('results_scroll').set_overlay_scrolling(c_over)
-        self.builder.get_object('content_scroll').set_overlay_scrolling(c_over)
+        page.builder.get_object('table_scroll').set_overlay_scrolling(c_over)
+        page.builder.get_object('editor_scroll').set_overlay_scrolling(c_over)
+        page.builder.get_object('results_scroll').set_overlay_scrolling(c_over)
+        page.builder.get_object('content_scroll').set_overlay_scrolling(c_over)
 
-        self.add(edit_pane)
-        edit_pane.show_all()
-
-        self.connection_active = True
+        page.add(container)
+        container.show_all()
 
         # Bind run button
         btn_run = self.builder.get_object('btn_run')
+        # TODO: disable run button when current tab is not connected
         btn_run.set_sensitive(True)
         btn_run.connect('clicked', self.btn_run)
 
+    def get_db_connection(self):
+        """Get the database connection from the current page"""
+        page = self.get_current_page()
+        if page:
+            if hasattr(page, 'db_connection'):
+                return page.db_connection
+        return None
+
     def run_editor_query(self):
         """Run the query currently in the editor"""
-        buffer = self.editor.get_buffer()
+        page = self.get_current_page()
+        buffer = page.editor.get_buffer()
         sel_range = buffer.get_selection_bounds()
         if not sel_range:
             sel_range = (buffer.get_start_iter(), buffer.get_end_iter())
         query = buffer.get_text(*sel_range, False)
 
-        results_scroll = self.builder.get_object('results_scroll')
+        results_scroll = page.builder.get_object('results_scroll')
         uihelper.add_spinner(results_scroll)
 
         def run_query(query, window):
             """Execute query and call show_result"""
-            cursor = self.db_connection.cursor()
+            cursor = self.get_db_connection().cursor()
             try:
                 cursor.execute(query)
             except pymysql.err.Error as err:
@@ -222,11 +238,13 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def show_result(self, result, meta):
         """Show a result set in a TreeView"""
-        results_scroll = self.builder.get_object('results_scroll')
+        page = self.get_current_page()
+        results_scroll = page.builder.get_object('results_scroll')
         if results_scroll.get_child():
             results_scroll.remove(results_scroll.get_child())
 
-        results_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False)
+        results_tree = Gtk.TreeView(enable_grid_lines=True, enable_search=False,
+                                    fixed_height_mode=True)
         fontdesc = Pango.FontDescription("monospace 9")
         results_tree.modify_font(fontdesc)
 
@@ -239,7 +257,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def show_message(self, message):
         """Show message result from query"""
-        results_scroll = self.builder.get_object('results_scroll')
+        page = self.get_current_page()
+        results_scroll = page.builder.get_object('results_scroll')
         if results_scroll.get_child():
             results_scroll.remove(results_scroll.get_child())
         align = Gtk.Alignment()
@@ -264,22 +283,30 @@ class AppWindow(Gtk.ApplicationWindow):
         # Select new database
         model = combo.get_model()
         db_name = model[tree_iter][0]
-        self.db_connection.select_db(db_name)
-        config.set_connection_lastdb(self.db_bookmark_id, db_name)
+        self.get_db_connection().select_db(db_name)
+        page = self.get_current_page()
+        if hasattr(page, 'db_bookmark_id'):
+            bookmark_id = page.db_bookmark_id
+            config.set_connection_lastdb(bookmark_id, db_name)
 
         self.update_table_list()
 
     def update_table_list(self):
         """Update the table/view list in the left pane"""
-        if not self.db_connection:
+        if not self.get_db_connection():
             return
 
-        table_scroll = self.builder.get_object('table_scroll')
+        page = self.get_current_page()
+
+        if not hasattr(page, 'builder'):
+            return
+
+        table_scroll = page.builder.get_object('table_scroll')
         uihelper.add_spinner(table_scroll)
 
         def list_query():
             """Load table list"""
-            cursor = self.db_connection.cursor()
+            cursor = self.get_db_connection().cursor()
             try:
                 cursor.execute('SHOW TABLES')
             except pymysql.err.Error as err:
@@ -297,7 +324,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
         def list_display(tables, meta):
             """Render table list"""
-            table_tree = Gtk.TreeView(enable_search=True)
+            table_tree = Gtk.TreeView(enable_search=True,
+                                      fixed_height_mode=True)
             fontdesc = Pango.FontDescription("monospace 9")
             table_tree.modify_font(fontdesc)
 
@@ -329,8 +357,8 @@ class AppWindow(Gtk.ApplicationWindow):
 
     def load_table_contents(self, table_name):
         """Load and display table contents"""
-
-        content_scroll = self.builder.get_object('content_scroll')
+        page = self.get_current_page()
+        content_scroll = page.builder.get_object('content_scroll')
         uihelper.add_spinner(content_scroll)
 
         def content_query(table_name):
@@ -338,7 +366,7 @@ class AppWindow(Gtk.ApplicationWindow):
             # TODO: Allow variable row limit
             identifier = dbhelper.escape_identifier(table_name)
             query = 'SELECT * FROM %s LIMIT 300' % identifier
-            cursor = self.db_connection.cursor()
+            cursor = self.get_db_connection().cursor()
             try:
                 cursor.execute(query)
             except pymysql.err.Error as err:
@@ -357,7 +385,8 @@ class AppWindow(Gtk.ApplicationWindow):
         def content_display(result, meta):
             """Render query result"""
             content_tree = Gtk.TreeView(enable_grid_lines=True,
-                                        enable_search=False)
+                                        enable_search=False,
+                                        fixed_height_mode=True)
             fontdesc = Pango.FontDescription("monospace 9")
             content_tree.modify_font(fontdesc)
 
@@ -381,11 +410,11 @@ class AppWindow(Gtk.ApplicationWindow):
         """Show table structure info"""
 
         # Show basic structure
-        structure_scroll = self.builder.get_object('structure_scroll')
-        label = Gtk.Label(label='test', selectable=True, wrap=True)
+        # structure_scroll = self.builder.get_object('structure_scroll')
+        # label = Gtk.Label(label='test', selectable=True, wrap=True)
 
-        #
-        index_scroll = self.builder.get_object('structure_index_scroll')
+        # Show index info
+        # index_scroll = self.builder.get_object('structure_index_scroll')
 
     def btn_add_connection(self, button):
         """Show Add Connection modal on button click"""
@@ -432,8 +461,9 @@ class AppWindow(Gtk.ApplicationWindow):
     def on_destroy(self, widget=None, *data):
         """Write config DB and close MySQL connections on quit"""
         config.commit()
-        if self.db_connection:
-            self.db_connection.close()
+        connection = self.get_db_connection()
+        if connection:
+            connection.close()
 
 class Application(Gtk.Application):
     """Core application class"""
@@ -620,21 +650,23 @@ class PreferencesWindow(Gtk.Window):
     def overlay_switch(self, widget, event, user_data=None):
         """Handle overlay scrollbar switch toggle"""
         config.set_config('overlay-scrollbars', int(event))
-        if app.window.connection_active:
-            builder = app.window.builder
-            builder.get_object('table_scroll').set_overlay_scrolling(event)
-            builder.get_object('editor_scroll').set_overlay_scrolling(event)
-            builder.get_object('results_scroll').set_overlay_scrolling(event)
-            builder.get_object('content_scroll').set_overlay_scrolling(event)
+        # TODO: update all instances of GtkSource
+        # if app.window.connection_active:
+        #     builder = app.window.builder
+        #     builder.get_object('table_scroll').set_overlay_scrolling(event)
+        #     builder.get_object('editor_scroll').set_overlay_scrolling(event)
+        #     builder.get_object('results_scroll').set_overlay_scrolling(event)
+        #     builder.get_object('content_scroll').set_overlay_scrolling(event)
 
     def style_chooser(self, widget, event, user_data=None):
         """Handle style chooser scheme selection"""
         style_name = widget.get_style_scheme().get_id()
         config.set_config('source-style', style_name)
-        if app.window.connection_active:
-            scheme_manager = GtkSource.StyleSchemeManager()
-            scheme = scheme_manager.get_scheme(style_name)
-            app.window.editor.get_buffer().set_style_scheme(scheme)
+        # TODO: update all instances of GtkSource
+        # if app.window.connection_active:
+        #     scheme_manager = GtkSource.StyleSchemeManager()
+        #     scheme = scheme_manager.get_scheme(style_name)
+        #     app.window.editor.get_buffer().set_style_scheme(scheme)
 
 
 if __name__ == '__main__':
