@@ -226,9 +226,10 @@ class AppWindow(Gtk.ApplicationWindow):
         btn_run.set_sensitive(True)
         btn_run.connect('clicked', self.btn_run)
 
-    def get_db_connection(self):
+    def get_db_connection(self, page=None):
         """Get the database connection from the current page"""
-        page = self.get_current_page()
+        if page is None:
+            page = self.get_current_page()
         if page:
             if hasattr(page, 'db_connection'):
                 return page.db_connection
