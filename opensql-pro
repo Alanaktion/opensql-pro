@@ -594,7 +594,7 @@ class AddConnectionWindow(Gtk.Window):
 
         self.connect('key_press_event', self.on_key_press)
 
-    def on_key_press(self, widget, event, user_data=None):`
+    def on_key_press(self, widget, event, user_data=None):
         """Handle key press"""
         key = Gdk.keyval_name(event.keyval)
         if key == 'Escape':
