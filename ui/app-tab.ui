@@ -32,11 +32,13 @@
         <property name="image">img_close</property>
         <property name="relief">none</property>
         <property name="always_show_image">True</property>
+        <signal name="clicked" handler="btn_close_tab" swapped="no"/>
       </object>
       <packing>
         <property name="expand">False</property>
         <property name="fill">True</property>
         <property name="position">1</property>
+        <property name="pack_type">end</property>
       </packing>
     </child>
   </object>

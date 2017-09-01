@@ -82,25 +82,42 @@ class AppWindow(Gtk.ApplicationWindow):
         start_builder.connect_signals(self)
 
         box.add(start_builder.get_object('container'))
+        box.builder = start_builder
+
+        connections = config.get_connections()
+        for row in connections:
+            self.add_connection_btn(row, page=box)
 
         connection_list = start_builder.get_object('connection_list')
-        connections = config.get_connections()
-
-        for row in connections:
-            self.add_connection_btn(row, connection_list)
-
         conn_add_button = start_builder.get_object('btn_add_connection')
         connection_list.pack_end(conn_add_button, True, True, 0)
 
         tab = builder.get_object('tab')
         tab.builder = builder
-        self.notebook.append_page(box, tab)
+        tab.content = box
+        page_num = self.notebook.append_page(box, tab)
+        self.notebook.set_current_page(page_num)
+        box.show_all()
+
+    def close_page(self, page):
+        """Close a notebook page and any connections it has"""
+        if hasattr(page, 'db_connection'):
+            page.db_connection.close()
+        self.notebook.remove(page)
+
+    def btn_close_tab(self, widget=None, *data):
+        """Close tab by button click"""
+        tab = widget.get_ancestor(Gtk.Box)
+        if not tab:
+            return
+        if hasattr(tab, 'content'):
+            self.close_page(tab.content)
 
     def get_current_page(self):
         """Get the current notebook page"""
-        page_id = self.notebook.get_current_page()
-        if page_id is not None:
-            page = self.notebook.get_nth_page(page_id)
+        page_num = self.notebook.get_current_page()
+        if page_num is not None:
+            page = self.notebook.get_nth_page(page_num)
             return page
         return None
 
@@ -108,11 +125,17 @@ class AppWindow(Gtk.ApplicationWindow):
         """Add a new connection tab on click"""
         self.add_page()
 
-    def add_connection_btn(self, data, connection_list, show=False):
+    def add_connection_btn(self, data, show=False, page=None):
         """Add button for saved connection"""
         button = Gtk.Button(label=data[1])
         button.connect('clicked', self.btn_connect_saved, data[0])
+
+        if page is None:
+            page = self.get_current_page()
+
+        connection_list = page.builder.get_object('connection_list')
         connection_list.pack_end(button, True, True, 0)
+
         if show:
             connection_list.show_all()
 
@@ -571,7 +594,7 @@ class AddConnectionWindow(Gtk.Window):
 
         self.connect('key_press_event', self.on_key_press)
 
-    def on_key_press(self, widget, event, user_data=None):
+    def on_key_press(self, widget, event, user_data=None):`
         """Handle key press"""
         key = Gdk.keyval_name(event.keyval)
         if key == 'Escape':
@@ -592,8 +615,7 @@ class AddConnectionWindow(Gtk.Window):
         cid = config.add_connection(name, host, port, user, password)
 
         data = config.get_connection(cid)
-        # TODO: use box_connect from current tab
-        # app.window.add_connection_btn(data, True)
+        app.window.add_connection_btn(data, True)
 
         self.close()
 
