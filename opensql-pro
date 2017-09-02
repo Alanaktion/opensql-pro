@@ -149,7 +149,8 @@ class AppWindow(Gtk.ApplicationWindow):
                                    user=conndata[4],
                                    password=conndata[5],
                                    charset='utf8mb4',
-                                   cursorclass=pymysql.cursors.DictCursor)
+                                   cursorclass=pymysql.cursors.DictCursor,
+                                   autocommit=True)
             page.db_connection = conn
 
             # Initialize editor builder
@@ -308,7 +309,9 @@ class AppWindow(Gtk.ApplicationWindow):
         # Select new database
         model = combo.get_model()
         db_name = model[tree_iter][0]
-        self.get_db_connection().select_db(db_name)
+        conn = self.get_db_connection()
+        if conn and db_name:
+            self.get_db_connection().select_db(db_name)
         page = self.get_current_page()
         if hasattr(page, 'db_bookmark_id'):
             bookmark_id = page.db_bookmark_id
